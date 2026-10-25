@@ -5,10 +5,12 @@ import (
 	"reflect"
 )
 
+// DeleteQueryBuilder generates SQL-Statements.
 type DeleteQueryBuilder interface {
 	GetDeleteQuery(e Entity) string
 }
 
+// Delete takes an Entity and deletes it from the connected database.
 func Delete(e Entity) error {
 
 	if e == nil {

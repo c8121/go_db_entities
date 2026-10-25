@@ -5,10 +5,12 @@ import (
 	"reflect"
 )
 
+// SelectQueryBuilder generates SQL-Statements.
 type SelectQueryBuilder interface {
 	GetSelectQuery(e Entity, filter map[string]any) string
 }
 
+// Select takes a filter-map (column-name -> value), selects from the connected database and assigns to given Entity.
 func Select(e Entity, filter map[string]any) error {
 
 	if e == nil {

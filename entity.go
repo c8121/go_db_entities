@@ -4,6 +4,8 @@ import (
 	"reflect"
 )
 
+// Entity provides function required to build SQL/DDL-Statements
+// and to identify a database entity.
 type Entity interface {
 	GetEntityName() string
 
@@ -11,17 +13,16 @@ type Entity interface {
 	SetId(id int64)
 }
 
+// GetAsStruct takes an interface (given as parameter to a function for example an unwraps the struct.
 func GetAsStruct(e Entity) any {
 	ptr := reflect.ValueOf(e)
 	wrp := reflect.Indirect(ptr)
 	return wrp.Interface()
 }
 
+// GetVisibleFields reads all visible fields from the given Entity.
 func GetVisibleFields(e Entity) []reflect.StructField {
 
-	ptr := reflect.ValueOf(e)
-	wrp := reflect.Indirect(ptr)
-	value := wrp.Interface()
-
+	value := GetAsStruct(e)
 	return reflect.VisibleFields(reflect.TypeOf(value))
 }

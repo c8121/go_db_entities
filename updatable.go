@@ -5,10 +5,12 @@ import (
 	"reflect"
 )
 
+// UpdateQueryBuilder generates SQL-Statements.
 type UpdateQueryBuilder interface {
 	GetUpdateQuery(e Entity) string
 }
 
+// Update takes an Entity and updates it into the connected database.
 func Update(e Entity) error {
 
 	if e == nil {

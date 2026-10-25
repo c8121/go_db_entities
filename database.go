@@ -11,6 +11,7 @@ var (
 	selectBuilder SelectQueryBuilder
 )
 
+// InitEntityDB takes database connection and DDL/SQL-Builders required to read/write database.
 func InitEntityDB(database *sql.DB,
 	createQueryBuilder CreateQueryBuilder,
 	insertQueryBuilder InsertQueryBuilder,
