@@ -9,9 +9,6 @@ type InsertQueryBuilder interface {
 	GetInsertQuery(e Entity) string
 }
 
-type Insertable interface {
-	SetId(id int64)
-}
 
 func Insert(e Entity) error {
 
@@ -19,9 +16,8 @@ func Insert(e Entity) error {
 		return ErrNil
 	}
 
-	insertable, ok := e.(Insertable)
-	if !ok {
-		return ErrNotInsertable
+	if e.GetId() != 0 {
+		return ErrExists
 	}
 
 	sql := insertBuilder.GetInsertQuery(e)
@@ -59,7 +55,7 @@ func Insert(e Entity) error {
 		return err
 	}
 
-	insertable.SetId(id)
+	e.SetId(id)
 
 	return nil
 }

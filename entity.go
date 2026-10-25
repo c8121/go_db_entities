@@ -6,7 +6,9 @@ import (
 
 type Entity interface {
 	GetEntityName() string
-	GetEntityFieldNames() []string
+
+	GetId() int64
+	SetId(id int64)
 }
 
 func GetAsStruct(e Entity) any {

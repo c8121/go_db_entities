@@ -19,8 +19,8 @@ func (p *Person) GetEntityName() string {
 	return "Person"
 }
 
-func (p *Person) GetEntityFieldNames() []string {
-	return []string{}
+func (p *Person) GetId() int64 {
+	return p.Id
 }
 
 func (p *Person) SetId(id int64) {

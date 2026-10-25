@@ -15,6 +15,10 @@ func Delete(e Entity) error {
 		return ErrNil
 	}
 
+	if e.GetId() == 0 {
+		return ErrNotFound
+	}
+
 	sql := deleteBuilder.GetDeleteQuery(e)
 	log.Println(sql)
 
@@ -37,10 +41,7 @@ func Delete(e Entity) error {
 		return err
 	}
 
-	insertable, ok := e.(Insertable)
-	if ok {
-		insertable.SetId(0)
-	}
+	e.SetId(0)
 
 	return nil
 }

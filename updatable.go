@@ -15,6 +15,10 @@ func Update(e Entity) error {
 		return ErrNil
 	}
 
+	if e.GetId() == 0 {
+		return ErrNotFound
+	}
+
 	sql := updateBuilder.GetUpdateQuery(e)
 	log.Println(sql)
 
@@ -29,17 +33,14 @@ func Update(e Entity) error {
 	v := reflect.ValueOf(GetAsStruct(e))
 
 	values := make([]any, len(entityFields))
-	var id any
 	var p = 0
 	for _, field := range entityFields {
 		if field.Name != "Id" {
 			values[p] = v.FieldByName(field.Name).Interface()
 			p++
-		} else {
-			id = v.FieldByName(field.Name).Interface()
 		}
 	}
-	values[p] = id
+	values[p] = e.GetId()
 	log.Println(values)
 
 	_, err = stmt.Exec(values...)

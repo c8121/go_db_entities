@@ -4,7 +4,7 @@ import "errors"
 
 var (
 	ErrNotFound              = errors.New("Entity not found")
-	ErrNotInsertable         = errors.New("not a Insertable")
+	ErrExists                = errors.New("Entity already exists")
 	ErrNil                   = errors.New("nil object")
 	ErrMustBePointerToStruct = errors.New("must be pointer to struct")
 )

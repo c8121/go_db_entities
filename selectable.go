@@ -61,10 +61,7 @@ func Select(e Entity, filter map[string]any) error {
 			return err
 		}
 	} else {
-		insertable, ok := e.(Insertable)
-		if ok {
-			insertable.SetId(0)
-		}
+		e.SetId(0)
 		return ErrNotFound
 	}
 
