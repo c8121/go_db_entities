@@ -15,10 +15,6 @@ type SelectQueryBuilder interface {
 func Select(entitySupplier func() Entity, filter map[string]any) ([]Entity, error) {
 
 	e := entitySupplier()
-	destValue := reflect.ValueOf(e)
-	if destValue.Kind() != reflect.Ptr || destValue.Elem().Kind() != reflect.Struct {
-		return nil, ErrMustBePointerToStruct
-	}
 
 	sql := selectBuilder.GetSelectQuery(e, filter)
 	log.Println(sql)
@@ -51,6 +47,11 @@ func Select(entitySupplier func() Entity, filter map[string]any) ([]Entity, erro
 		if len(entities) > 0 {
 			//First Entity was created at top
 			e = entitySupplier()
+		}
+
+		destValue := reflect.ValueOf(e)
+		if destValue.Kind() != reflect.Ptr || destValue.Elem().Kind() != reflect.Struct {
+			return nil, ErrMustBePointerToStruct
 		}
 
 		structValue := destValue.Elem()
