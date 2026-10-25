@@ -1,6 +1,7 @@
 package go_db_entities
 
 import (
+	"log"
 	"reflect"
 )
 
@@ -20,9 +21,19 @@ func Load(e Entity, filter map[string]any) error {
 		return ErrNil
 	}
 
-	err := Select(e, filter)
+	items, err := Select(
+		func() Entity {
+			return e
+		},
+		filter)
 	if err != nil {
 		return err
+	}
+
+	if len(items) == 0 {
+		return ErrNotFound
+	} else if len(items) > 1 {
+		log.Printf("WARNING: Multiple entities found with filter: %v", filter)
 	}
 
 	return nil
@@ -42,7 +53,7 @@ func Save(e Entity) error {
 	return Update(e)
 }
 
-// CreateIdFilter creates a map which contains Id = id
+// CreateIdFilter creates a map which contains `Id = id`
 func CreateIdFilter(id int64) map[string]any {
 	filter := make(map[string]any)
 	filter["Id"] = id

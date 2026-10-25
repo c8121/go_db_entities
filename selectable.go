@@ -10,16 +10,14 @@ type SelectQueryBuilder interface {
 	GetSelectQuery(e Entity, filter map[string]any) string
 }
 
-// Select takes a filter-map (column-name -> value), selects from the connected database and assigns to given Entity.
-func Select(e Entity, filter map[string]any) error {
+// Select takes a filter-map (column-name -> value), selects rows from the connected database
+// and calls entitySupplier for each row to apply values to Entity.
+func Select(entitySupplier func() Entity, filter map[string]any) ([]Entity, error) {
 
-	if e == nil {
-		return ErrNil
-	}
-
+	e := entitySupplier()
 	destValue := reflect.ValueOf(e)
 	if destValue.Kind() != reflect.Ptr || destValue.Elem().Kind() != reflect.Struct {
-		return ErrMustBePointerToStruct
+		return nil, ErrMustBePointerToStruct
 	}
 
 	sql := selectBuilder.GetSelectQuery(e, filter)
@@ -28,7 +26,7 @@ func Select(e Entity, filter map[string]any) error {
 	stmt, err := db.Prepare(sql)
 	if err != nil {
 		log.Printf("Error preparing statement: %s", err)
-		return err
+		return nil, err
 	}
 	defer CloseOrLog(stmt)
 
@@ -41,14 +39,24 @@ func Select(e Entity, filter map[string]any) error {
 	rows, err := stmt.Query(args...)
 	if err != nil {
 		log.Printf("Error executing query: %s", err)
-		return err
+		return nil, err
 	}
 	defer CloseOrLog(rows)
 
-	if rows.Next() {
+	var entities = make([]Entity, 0)
+	var entityFields []reflect.StructField = nil
+
+	for rows.Next() {
+
+		if len(entities) > 0 {
+			//First Entity was created at top
+			e = entitySupplier()
+		}
 
 		structValue := destValue.Elem()
-		entityFields := GetVisibleFields(e)
+		if entityFields == nil {
+			entityFields = GetVisibleFields(e)
+		}
 
 		values := make([]any, len(entityFields))
 		scanArgs := make([]interface{}, len(values))
@@ -60,12 +68,15 @@ func Select(e Entity, filter map[string]any) error {
 
 		err = rows.Scan(scanArgs...)
 		if err != nil {
-			return err
+			return nil, err
 		}
-	} else {
-		e.SetId(0)
-		return ErrNotFound
+
+		entities = append(entities, e)
 	}
 
-	return nil
+	if len(entities) == 0 {
+		return entities, ErrNotFound
+	}
+
+	return entities, nil
 }

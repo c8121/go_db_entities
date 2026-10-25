@@ -35,8 +35,9 @@ func TestEntityCRUD(t *testing.T) {
 	}
 
 	loadedPerson := &Person{}
+	loadedPersonSupplier := func() go_db_entities.Entity { return loadedPerson }
 
-	err = go_db_entities.Select(loadedPerson, go_db_entities.CreateIdFilter(person.Id))
+	_, err = go_db_entities.Select(loadedPersonSupplier, go_db_entities.CreateIdFilter(person.Id))
 	if err != nil {
 		t.Error(err)
 	}
@@ -57,7 +58,7 @@ func TestEntityCRUD(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = go_db_entities.Select(loadedPerson, go_db_entities.CreateIdFilter(person.Id))
+	_, err = go_db_entities.Select(loadedPersonSupplier, go_db_entities.CreateIdFilter(person.Id))
 	if err != nil {
 		t.Error(err)
 	}
@@ -70,7 +71,7 @@ func TestEntityCRUD(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = go_db_entities.Select(loadedPerson, go_db_entities.CreateIdFilter(person.Id))
+	_, err = go_db_entities.Select(loadedPersonSupplier, go_db_entities.CreateIdFilter(person.Id))
 	if err != nil && !errors.Is(err, go_db_entities.ErrNotFound) {
 		t.Error(err)
 	}
