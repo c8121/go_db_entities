@@ -6,22 +6,12 @@ import (
 	"time"
 
 	"github.com/c8121/go_db_entities"
-	"github.com/c8121/go_db_entities/sqlite"
 )
 
 func TestEntityCRUD(t *testing.T) {
 
 	db := OpenTestDB()
 	defer go_db_entities.CloseOrLog(db)
-
-	go_db_entities.InitEntityDB(
-		db,
-		sqlite.CreateQueryBuilder{},
-		sqlite.InsertQueryBuilder{},
-		sqlite.UpdateQueryBuilder{},
-		sqlite.DeleteQueryBuilder{},
-		sqlite.SelectQueryBuilder{},
-	)
 
 	person := &Person{
 		FirstName:    "John",
@@ -46,9 +36,7 @@ func TestEntityCRUD(t *testing.T) {
 
 	loadedPerson := &Person{}
 
-	filter := make(map[string]any)
-	filter["id"] = person.Id
-	err = go_db_entities.Select(loadedPerson, filter)
+	err = go_db_entities.Select(loadedPerson, go_db_entities.CreateIdFilter(person.Id))
 	if err != nil {
 		t.Error(err)
 	}
@@ -69,7 +57,7 @@ func TestEntityCRUD(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = go_db_entities.Select(loadedPerson, filter)
+	err = go_db_entities.Select(loadedPerson, go_db_entities.CreateIdFilter(person.Id))
 	if err != nil {
 		t.Error(err)
 	}
@@ -82,7 +70,7 @@ func TestEntityCRUD(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = go_db_entities.Select(loadedPerson, filter)
+	err = go_db_entities.Select(loadedPerson, go_db_entities.CreateIdFilter(person.Id))
 	if err != nil && !errors.Is(err, go_db_entities.ErrNotFound) {
 		t.Error(err)
 	}

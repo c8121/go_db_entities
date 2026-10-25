@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"log"
 
+	"github.com/c8121/go_db_entities"
+	"github.com/c8121/go_db_entities/sqlite"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -16,6 +18,15 @@ func OpenTestDB() *sql.DB {
 	if err != nil {
 		panic(err)
 	}
+
+	go_db_entities.InitEntityDB(
+		db,
+		sqlite.CreateQueryBuilder{},
+		sqlite.InsertQueryBuilder{},
+		sqlite.UpdateQueryBuilder{},
+		sqlite.DeleteQueryBuilder{},
+		sqlite.SelectQueryBuilder{},
+	)
 
 	return db
 }
