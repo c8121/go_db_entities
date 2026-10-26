@@ -9,7 +9,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func OpenTestDB() *sql.DB {
+func OpenTestDB() *go_db_entities.Context {
 
 	url := "file:TestDb?mode=memory&cache=shared"
 	log.Printf("OpenTestDB: %s", url)
@@ -19,14 +19,8 @@ func OpenTestDB() *sql.DB {
 		panic(err)
 	}
 
-	go_db_entities.InitEntityDB(
+	return go_db_entities.NewContext(
 		db,
-		sqlite.CreateQueryBuilder{},
-		sqlite.InsertQueryBuilder{},
-		sqlite.UpdateQueryBuilder{},
-		sqlite.DeleteQueryBuilder{},
-		sqlite.SelectQueryBuilder{},
+		sqlite.NewQueryBuilder(),
 	)
-
-	return db
 }

@@ -7,29 +7,26 @@ import (
 
 // SelectQueryBuilder generates SQL-Statements.
 type SelectQueryBuilder interface {
-	GetSelectQuery(e Entity, filter map[string]any) string
+	GetSelectQuery(c *Context, e Entity, filter Filter) string
 }
 
 // Select takes a filter-map (column-name -> value), selects rows from the connected database
 // and calls entitySupplier for each row to apply values to Entity.
-func Select(entitySupplier func() Entity, filter map[string]any) ([]Entity, error) {
+func Select(c *Context, entitySupplier func() Entity, filter Filter) ([]Entity, error) {
 
 	e := entitySupplier()
 
-	sql := selectBuilder.GetSelectQuery(e, filter)
+	sql := c.QueryBuilder.SelectQueryBuilder.GetSelectQuery(c, e, filter)
 	log.Println(sql)
 
-	stmt, err := db.Prepare(sql)
+	stmt, err := c.DB.Prepare(sql)
 	if err != nil {
 		log.Printf("Error preparing statement: %s", err)
 		return nil, err
 	}
 	defer CloseOrLog(stmt)
 
-	args := make([]any, 0)
-	for _, arg := range filter {
-		args = append(args, arg)
-	}
+	args := filter.GetFilterValues()
 	log.Println(args)
 
 	rows, err := stmt.Query(args...)

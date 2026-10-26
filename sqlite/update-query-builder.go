@@ -7,7 +7,7 @@ import (
 type UpdateQueryBuilder struct {
 }
 
-func (b UpdateQueryBuilder) GetUpdateQuery(e go_db_entities.Entity) string {
+func (b UpdateQueryBuilder) GetUpdateQuery(c *go_db_entities.Context, e go_db_entities.Entity) string {
 
 	sql := "UPDATE " + e.GetEntityName()
 

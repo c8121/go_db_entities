@@ -10,17 +10,17 @@ import (
 
 func TestEntityLSD(t *testing.T) {
 
-	db := OpenTestDB()
-	defer go_db_entities.CloseOrLog(db)
+	ctx := OpenTestDB()
+	defer go_db_entities.CloseOrLog(ctx)
 
 	person := &Person{}
 
-	err := go_db_entities.Create(person)
+	err := go_db_entities.Create(ctx, person)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = go_db_entities.Load(person, go_db_entities.CreateIdFilter(1))
+	err = go_db_entities.Load(ctx, person, *go_db_entities.NewIdFilter(1))
 	if !errors.Is(err, go_db_entities.ErrNotFound) {
 		t.Errorf("Load() should return ErrNotFound")
 	}
@@ -36,20 +36,20 @@ func TestEntityLSD(t *testing.T) {
 		UpdatedAt:    time.Now(),
 	}
 
-	err = go_db_entities.Save(person)
+	err = go_db_entities.Save(ctx, person)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	person.FirstName = "Jane"
-	err = go_db_entities.Save(person)
+	err = go_db_entities.Save(ctx, person)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	id := person.Id
 	person = &Person{}
-	err = go_db_entities.Load(person, go_db_entities.CreateIdFilter(id))
+	err = go_db_entities.Load(ctx, person, *go_db_entities.NewIdFilter(id))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -58,12 +58,12 @@ func TestEntityLSD(t *testing.T) {
 		t.Errorf("FirstName should be Jane")
 	}
 
-	err = go_db_entities.Delete(person)
+	err = go_db_entities.Delete(ctx, person)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = go_db_entities.Load(person, go_db_entities.CreateIdFilter(id))
+	err = go_db_entities.Load(ctx, person, *go_db_entities.NewIdFilter(id))
 	if !errors.Is(err, go_db_entities.ErrNotFound) {
 		t.Errorf("Load() should return ErrNotFound")
 	}

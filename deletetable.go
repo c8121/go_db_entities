@@ -7,11 +7,11 @@ import (
 
 // DeleteQueryBuilder generates SQL-Statements.
 type DeleteQueryBuilder interface {
-	GetDeleteQuery(e Entity) string
+	GetDeleteQuery(c *Context, e Entity) string
 }
 
 // Delete takes an Entity and deletes it from the connected database.
-func Delete(e Entity) error {
+func Delete(c *Context, e Entity) error {
 
 	if e == nil {
 		return ErrNil
@@ -21,10 +21,10 @@ func Delete(e Entity) error {
 		return ErrNotFound
 	}
 
-	sql := deleteBuilder.GetDeleteQuery(e)
+	sql := c.QueryBuilder.DeleteQueryBuilder.GetDeleteQuery(c, e)
 	log.Println(sql)
 
-	stmt, err := db.Prepare(sql)
+	stmt, err := c.DB.Prepare(sql)
 	if err != nil {
 		log.Printf("Error preparing statement: %s", err)
 		return err

@@ -10,8 +10,8 @@ import (
 
 func TestEntityCRUD(t *testing.T) {
 
-	db := OpenTestDB()
-	defer go_db_entities.CloseOrLog(db)
+	ctx := OpenTestDB()
+	defer go_db_entities.CloseOrLog(ctx)
 
 	person := &Person{
 		FirstName:    "John",
@@ -24,12 +24,12 @@ func TestEntityCRUD(t *testing.T) {
 		UpdatedAt:    time.Now(),
 	}
 
-	err := go_db_entities.Create(person)
+	err := go_db_entities.Create(ctx, person)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = go_db_entities.Insert(person)
+	err = go_db_entities.Insert(ctx, person)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -37,7 +37,7 @@ func TestEntityCRUD(t *testing.T) {
 	loadedPerson := &Person{}
 	loadedPersonSupplier := func() go_db_entities.Entity { return loadedPerson }
 
-	_, err = go_db_entities.Select(loadedPersonSupplier, go_db_entities.CreateIdFilter(person.Id))
+	_, err = go_db_entities.Select(ctx, loadedPersonSupplier, *go_db_entities.NewIdFilter(person.Id))
 	if err != nil {
 		t.Error(err)
 	}
@@ -53,12 +53,12 @@ func TestEntityCRUD(t *testing.T) {
 	}
 
 	loadedPerson.FirstName = "Jane"
-	err = go_db_entities.Update(loadedPerson)
+	err = go_db_entities.Update(ctx, loadedPerson)
 	if err != nil {
 		t.Error(err)
 	}
 
-	_, err = go_db_entities.Select(loadedPersonSupplier, go_db_entities.CreateIdFilter(person.Id))
+	_, err = go_db_entities.Select(ctx, loadedPersonSupplier, *go_db_entities.NewIdFilter(person.Id))
 	if err != nil {
 		t.Error(err)
 	}
@@ -66,12 +66,12 @@ func TestEntityCRUD(t *testing.T) {
 		t.Errorf("person first name should be %s, but %s", "Jane", loadedPerson.FirstName)
 	}
 
-	err = go_db_entities.Delete(loadedPerson)
+	err = go_db_entities.Delete(ctx, loadedPerson)
 	if err != nil {
 		t.Error(err)
 	}
 
-	_, err = go_db_entities.Select(loadedPersonSupplier, go_db_entities.CreateIdFilter(person.Id))
+	_, err = go_db_entities.Select(ctx, loadedPersonSupplier, *go_db_entities.NewIdFilter(person.Id))
 	if err != nil && !errors.Is(err, go_db_entities.ErrNotFound) {
 		t.Error(err)
 	}

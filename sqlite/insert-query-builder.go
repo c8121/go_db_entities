@@ -7,7 +7,7 @@ import (
 type InsertQueryBuilder struct {
 }
 
-func (b InsertQueryBuilder) GetInsertQuery(e go_db_entities.Entity) string {
+func (b InsertQueryBuilder) GetInsertQuery(c *go_db_entities.Context, e go_db_entities.Entity) string {
 
 	sql := "INSERT INTO " + e.GetEntityName()
 

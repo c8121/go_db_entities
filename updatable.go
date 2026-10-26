@@ -7,11 +7,11 @@ import (
 
 // UpdateQueryBuilder generates SQL-Statements.
 type UpdateQueryBuilder interface {
-	GetUpdateQuery(e Entity) string
+	GetUpdateQuery(c *Context, e Entity) string
 }
 
 // Update takes an Entity and updates it into the connected database.
-func Update(e Entity) error {
+func Update(c *Context, e Entity) error {
 
 	if e == nil {
 		return ErrNil
@@ -21,10 +21,10 @@ func Update(e Entity) error {
 		return ErrNotFound
 	}
 
-	sql := updateBuilder.GetUpdateQuery(e)
+	sql := c.QueryBuilder.UpdateQueryBuilder.GetUpdateQuery(c, e)
 	log.Println(sql)
 
-	stmt, err := db.Prepare(sql)
+	stmt, err := c.DB.Prepare(sql)
 	if err != nil {
 		log.Printf("Error preparing statement: %s", err)
 		return err

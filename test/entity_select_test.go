@@ -10,10 +10,10 @@ import (
 
 func TestEntitySelect(t *testing.T) {
 
-	db := OpenTestDB()
-	defer go_db_entities.CloseOrLog(db)
+	ctx := OpenTestDB()
+	defer go_db_entities.CloseOrLog(ctx)
 
-	err := go_db_entities.Create(&Person{})
+	err := go_db_entities.Create(ctx, &Person{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -27,20 +27,17 @@ func TestEntitySelect(t *testing.T) {
 			UpdatedAt:    time.Time{},
 		}
 
-		err = go_db_entities.Save(person)
+		err = go_db_entities.Save(ctx, person)
 		if err != nil {
 			t.Fatal(err)
 		}
 	}
 
-	filter := map[string]any{}
-	filter["StreetNumber"] = 1
-
 	itemSupplier := func() go_db_entities.Entity {
 		return &Person{}
 	}
 
-	list, err := go_db_entities.Select(itemSupplier, filter)
+	list, err := go_db_entities.Select(ctx, itemSupplier, *go_db_entities.NewFilter("Id", go_db_entities.CompareGraterEqual, 0))
 	if err != nil {
 		t.Fatal(err)
 	}

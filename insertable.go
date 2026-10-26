@@ -7,11 +7,11 @@ import (
 
 // InsertQueryBuilder generates SQL-Statements.
 type InsertQueryBuilder interface {
-	GetInsertQuery(e Entity) string
+	GetInsertQuery(c *Context, e Entity) string
 }
 
 // Insert takes an Entity and inserts it into the connected database.
-func Insert(e Entity) error {
+func Insert(c *Context, e Entity) error {
 
 	if e == nil {
 		return ErrNil
@@ -21,10 +21,10 @@ func Insert(e Entity) error {
 		return ErrExists
 	}
 
-	sql := insertBuilder.GetInsertQuery(e)
+	sql := c.QueryBuilder.InsertQueryBuilder.GetInsertQuery(c, e)
 	log.Println(sql)
 
-	stmt, err := db.Prepare(sql)
+	stmt, err := c.DB.Prepare(sql)
 	if err != nil {
 		log.Printf("Error preparing statement: %s", err)
 		return err

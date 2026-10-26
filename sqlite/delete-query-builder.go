@@ -7,7 +7,7 @@ import (
 type DeleteQueryBuilder struct {
 }
 
-func (b DeleteQueryBuilder) GetDeleteQuery(e go_db_entities.Entity) string {
+func (b DeleteQueryBuilder) GetDeleteQuery(c *go_db_entities.Context, e go_db_entities.Entity) string {
 
 	sql := "DELETE FROM " + e.GetEntityName() + " WHERE Id=?;"
 	return sql

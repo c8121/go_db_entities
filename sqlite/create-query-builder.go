@@ -7,7 +7,7 @@ import (
 type CreateQueryBuilder struct {
 }
 
-func (b CreateQueryBuilder) GetCreateQuery(e go_db_entities.Entity) string {
+func (b CreateQueryBuilder) GetCreateQuery(c *go_db_entities.Context, e go_db_entities.Entity) string {
 
 	sql := "CREATE TABLE " + e.GetEntityName()
 
