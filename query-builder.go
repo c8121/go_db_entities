@@ -1,0 +1,10 @@
+package go_db_entities
+
+type QueryBuilder struct {
+	CreateQueryBuilder CreateQueryBuilder
+	InsertQueryBuilder InsertQueryBuilder
+	UpdateQueryBuilder UpdateQueryBuilder
+	DeleteQueryBuilder DeleteQueryBuilder
+	SelectQueryBuilder SelectQueryBuilder
+	FilterQueryBuilder FilterQueryBuilder
+}
