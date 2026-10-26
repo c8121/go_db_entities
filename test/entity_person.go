@@ -4,11 +4,11 @@ import "time"
 
 type Person struct {
 	Id           int64
-	FirstName    string
-	LastName     string
-	StreetName   string
-	StreetNumber int //makes no sense as int in real life, just for testing
-	Zip          int
+	FirstName    string `dbe:"Index,Size:100"`
+	LastName     string `dbe:"Index"`
+	StreetName   string `dbe:"Size: 125"`
+	StreetNumber int    //makes no sense as int in real life, just for testing
+	Zip          int    `dbe:"Index"`
 	City         string
 
 	CreatedAt time.Time
