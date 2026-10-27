@@ -24,7 +24,28 @@ func (b TableQueryBuilder) GetTableQueryStatement(c *go_db_entities.Context, q g
 		sql += " LIMIT " + limit
 	}
 
+	order := b.GetOrderBy(c, q)
+	if len(order) > 0 {
+		sql += " ORDER BY " + order
+	}
+
 	sql += ";"
+
+	return sql
+}
+
+func (b TableQueryBuilder) GetOrderBy(c *go_db_entities.Context, q go_db_entities.TableQuery) string {
+
+	sql := ""
+
+	if q.Filter != nil && q.Filter.OrderBy != nil {
+		for _, field := range q.Filter.OrderBy {
+			if len(sql) > 0 {
+				sql += ","
+			}
+			sql += field
+		}
+	}
 
 	return sql
 }

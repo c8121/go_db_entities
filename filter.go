@@ -27,6 +27,8 @@ type Filter struct {
 
 	Offset int
 	Count  int
+
+	OrderBy []string
 }
 
 func NewFilter(fieldName string, comparison int, value any) *Filter {

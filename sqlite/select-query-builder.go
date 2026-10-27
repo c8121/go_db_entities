@@ -23,6 +23,19 @@ func (b SelectQueryBuilder) GetSelectQuery(c *go_db_entities.Context, e go_db_en
 		sql += fmt.Sprintf(" LIMIT %d,%d", filter.Offset, filter.Count)
 	}
 
+	if filter.OrderBy != nil {
+		order := ""
+		for _, field := range filter.OrderBy {
+			if len(order) > 0 {
+				order += ","
+			}
+			order += field
+		}
+		if len(order) > 0 {
+			sql += " ORDER BY " + order
+		}
+	}
+
 	if filter.Next != nil && filter.Next.Offset > 0 && filter.Next.Count > 0 {
 		log.Printf("Warn: Ignoring offest/count of nested filter")
 	}

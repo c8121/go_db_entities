@@ -70,8 +70,36 @@ func TestFilterWithoutWhere(t *testing.T) {
 
 	sql := queryBuilder.GetTableQueryStatement(ctx, query)
 	fmt.Printf("Query: %s\n", sql)
-	if !strings.Contains(sql, "LIMIT") || strings.Contains(sql, "WHERE))") {
+	if !strings.Contains(sql, "LIMIT") || strings.Contains(sql, "WHERE") {
+		t.Errorf("Invalid query: %s", sql)
+	}
+}
+
+func TestFilterWithOrderBy(t *testing.T) {
+
+	ctx := OpenTestDB()
+	defer go_db_entities.CloseOrLog(ctx)
+
+	queryBuilder := sqlite.TableQueryBuilder{}
+
+	query := go_db_entities.TableQuery{
+		FieldNames: []string{"FirstName", "LastName"},
+		Entity:     &Person{},
+		Filter: &go_db_entities.Filter{
+			OrderBy: []string{"FirstName", "LastName"},
+		},
+	}
+
+	sql := queryBuilder.GetTableQueryStatement(ctx, query)
+	fmt.Printf("Query: %s\n", sql)
+	if !strings.Contains(sql, "ORDER BY") || strings.Contains(sql, "WHERE") {
 		t.Errorf("Invalid query: %s", sql)
 	}
 
+	query.Filter.FieldName = "FirstName"
+	sql = queryBuilder.GetTableQueryStatement(ctx, query)
+	fmt.Printf("Query: %s\n", sql)
+	if !strings.Contains(sql, "ORDER BY") || !strings.Contains(sql, "WHERE") {
+		t.Errorf("Invalid query: %s", sql)
+	}
 }
