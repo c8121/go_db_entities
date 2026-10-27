@@ -103,3 +103,46 @@ func TestFilterWithOrderBy(t *testing.T) {
 		t.Errorf("Invalid query: %s", sql)
 	}
 }
+
+func TestFilterWithInClause(t *testing.T) {
+
+	ctx := OpenTestDB()
+	defer go_db_entities.CloseOrLog(ctx)
+
+	err := go_db_entities.Create(ctx, &Person{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = CreateTestPersons(ctx, 100)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	queryBuilder := sqlite.TableQueryBuilder{}
+
+	query := go_db_entities.TableQuery{
+		FieldNames: []string{"FirstName", "LastName"},
+		Entity:     &Person{},
+		Filter: &go_db_entities.Filter{
+			FieldName: "FirstName",
+			Value:     []string{"Jon_1", "Jon_99"},
+			OrderBy:   []string{"FirstName", "LastName"},
+		},
+	}
+
+	sql := queryBuilder.GetTableQueryStatement(ctx, query)
+	fmt.Printf("Query: %s\n", sql)
+	if !strings.Contains(sql, "ORDER BY") || !strings.Contains(sql, "WHERE") {
+		t.Errorf("Invalid query: %s", sql)
+	}
+
+	rows, err := go_db_entities.Query(ctx, query)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for i, row := range rows {
+		fmt.Println(i, row)
+	}
+}
