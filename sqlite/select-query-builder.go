@@ -19,10 +19,6 @@ func (b SelectQueryBuilder) GetSelectQuery(c *go_db_entities.Context, e go_db_en
 		sql += " WHERE " + where
 	}
 
-	if filter.Offset > 0 || filter.Count > 0 {
-		sql += fmt.Sprintf(" LIMIT %d,%d", filter.Offset, filter.Count)
-	}
-
 	if filter.OrderBy != nil {
 		order := ""
 		for _, field := range filter.OrderBy {
@@ -34,6 +30,10 @@ func (b SelectQueryBuilder) GetSelectQuery(c *go_db_entities.Context, e go_db_en
 		if len(order) > 0 {
 			sql += " ORDER BY " + order
 		}
+	}
+
+	if filter.Offset > 0 || filter.Count > 0 {
+		sql += fmt.Sprintf(" LIMIT %d,%d", filter.Offset, filter.Count)
 	}
 
 	if filter.Next != nil && filter.Next.Offset > 0 && filter.Next.Count > 0 {

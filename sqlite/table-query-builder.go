@@ -19,14 +19,14 @@ func (b TableQueryBuilder) GetTableQueryStatement(c *go_db_entities.Context, q g
 		sql += " WHERE " + where
 	}
 
-	limit := b.GetLimit(c, q)
-	if len(limit) > 0 {
-		sql += " LIMIT " + limit
-	}
-
 	order := b.GetOrderBy(c, q)
 	if len(order) > 0 {
 		sql += " ORDER BY " + order
+	}
+
+	limit := b.GetLimit(c, q)
+	if len(limit) > 0 {
+		sql += " LIMIT " + limit
 	}
 
 	sql += ";"
