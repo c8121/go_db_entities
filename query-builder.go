@@ -7,4 +7,5 @@ type QueryBuilder struct {
 	DeleteQueryBuilder DeleteQueryBuilder
 	SelectQueryBuilder SelectQueryBuilder
 	FilterQueryBuilder FilterQueryBuilder
+	TableQueryBuilder  TableQueryBuilder
 }

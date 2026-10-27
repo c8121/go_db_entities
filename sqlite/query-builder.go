@@ -10,5 +10,6 @@ func NewQueryBuilder() *go_db_entities.QueryBuilder {
 		DeleteQueryBuilder: &DeleteQueryBuilder{},
 		SelectQueryBuilder: &SelectQueryBuilder{},
 		FilterQueryBuilder: &FilterQueryBuilder{},
+		TableQueryBuilder:  &TableQueryBuilder{},
 	}
 }

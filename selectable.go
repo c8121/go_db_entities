@@ -56,8 +56,7 @@ func Select(c *Context, entitySupplier func() Entity, filter Filter) ([]Entity, 
 			entityFields = GetVisibleFields(e)
 		}
 
-		values := make([]any, len(entityFields))
-		scanArgs := make([]interface{}, len(values))
+		scanArgs := make([]interface{}, len(entityFields))
 
 		for i, field := range entityFields {
 			destField := structValue.FieldByName(field.Name)

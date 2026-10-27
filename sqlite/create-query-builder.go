@@ -40,7 +40,7 @@ func (b CreateQueryBuilder) GetCreateTableQuery(c *go_db_entities.Context, e go_
 			fields += " integer PRIMARY KEY"
 		} else {
 			switch field.Type.Name() {
-			case "int":
+			case "int", "int8", "int16", "int32", "int64":
 				fields += " Integer"
 				if hasFieldProps && fieldProps.Size > 0 {
 					fields += fmt.Sprintf("(%d)", fieldProps.Size)
