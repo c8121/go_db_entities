@@ -12,8 +12,12 @@ type SelectQueryBuilder struct {
 
 func (b SelectQueryBuilder) GetSelectQuery(c *go_db_entities.Context, e go_db_entities.Entity, filter go_db_entities.Filter) string {
 
-	sql := "SELECT * FROM " + e.GetEntityName() + " WHERE "
-	sql += c.QueryBuilder.FilterQueryBuilder.GetFilterStatement(c, filter)
+	sql := "SELECT * FROM " + e.GetEntityName()
+
+	where := c.QueryBuilder.FilterQueryBuilder.GetFilterStatement(c, filter)
+	if len(where) > 0 {
+		sql += " WHERE " + where
+	}
 
 	if filter.Offset > 0 || filter.Count > 0 {
 		sql += fmt.Sprintf(" LIMIT %d,%d", filter.Offset, filter.Count)

@@ -9,6 +9,10 @@ type FilterQueryBuilder struct {
 
 func (b FilterQueryBuilder) GetFilterStatement(c *go_db_entities.Context, f go_db_entities.Filter) string {
 
+	if len(f.FieldName) == 0 {
+		return ""
+	}
+
 	sql := f.FieldName
 
 	switch f.Comparison {

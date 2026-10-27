@@ -51,3 +51,27 @@ func TestFilter(t *testing.T) {
 		t.Errorf("Invalid values: num=%d, %v", len(values), values)
 	}
 }
+
+func TestFilterWithoutWhere(t *testing.T) {
+
+	ctx := OpenTestDB()
+	defer go_db_entities.CloseOrLog(ctx)
+
+	queryBuilder := sqlite.TableQueryBuilder{}
+
+	query := go_db_entities.TableQuery{
+		FieldNames: []string{"FirstName", "LastName"},
+		Entity:     &Person{},
+		Filter: &go_db_entities.Filter{
+			Offset: 0,
+			Count:  10,
+		},
+	}
+
+	sql := queryBuilder.GetTableQueryStatement(ctx, query)
+	fmt.Printf("Query: %s\n", sql)
+	if !strings.Contains(sql, "LIMIT") || strings.Contains(sql, "WHERE))") {
+		t.Errorf("Invalid query: %s", sql)
+	}
+
+}
