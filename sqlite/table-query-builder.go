@@ -1,6 +1,8 @@
 package sqlite
 
 import (
+	"fmt"
+
 	"github.com/c8121/go_db_entities"
 )
 
@@ -17,7 +19,23 @@ func (b TableQueryBuilder) GetTableQueryStatement(c *go_db_entities.Context, q g
 		sql += " WHERE " + where
 	}
 
+	limit := b.GetLimit(c, q)
+	if len(limit) > 0 {
+		sql += " LIMIT " + limit
+	}
+
 	sql += ";"
+
+	return sql
+}
+
+func (b TableQueryBuilder) GetLimit(c *go_db_entities.Context, q go_db_entities.TableQuery) string {
+
+	sql := ""
+
+	if q.Filter != nil && (q.Filter.Offset > 0 || q.Filter.Count > 0) {
+		sql = fmt.Sprintf("%d,%d", q.Filter.Offset, q.Filter.Count)
+	}
 
 	return sql
 }

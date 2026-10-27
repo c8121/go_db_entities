@@ -66,6 +66,11 @@ func TestEntityTableQuery(t *testing.T) {
 	sql = ctx.QueryBuilder.TableQueryBuilder.GetTableQueryStatement(ctx, *personQuery)
 	fmt.Println(sql)
 
+	personQuery.Filter.Offset = 0
+	personQuery.Filter.Count = 3
+	sql = ctx.QueryBuilder.TableQueryBuilder.GetTableQueryStatement(ctx, *personQuery)
+	fmt.Println(sql)
+
 	rows, err := go_db_entities.Query(ctx, *personQuery)
 	if err != nil {
 		t.Fatal(err)

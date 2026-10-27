@@ -24,6 +24,9 @@ type Filter struct {
 
 	Next            *Filter
 	NextConjunction int
+
+	Offset int
+	Count  int
 }
 
 func NewFilter(fieldName string, comparison int, value any) *Filter {

@@ -26,7 +26,11 @@ func TestEntitySelect(t *testing.T) {
 		return &Person{}
 	}
 
-	list, err := go_db_entities.Select(ctx, itemSupplier, *go_db_entities.NewFilter("Id", go_db_entities.CompareGraterEqual, 0))
+	filter := go_db_entities.NewFilter("Id", go_db_entities.CompareGraterEqual, 10)
+	filter.Offset = 10
+	filter.Count = 10
+
+	list, err := go_db_entities.Select(ctx, itemSupplier, *filter)
 	if err != nil {
 		t.Fatal(err)
 	}

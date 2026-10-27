@@ -10,7 +10,7 @@ type SelectQueryBuilder interface {
 	GetSelectQuery(c *Context, e Entity, filter Filter) string
 }
 
-// Select takes a filter-map (column-name -> value), selects rows from the connected database
+// Select takes a filter, selects rows from the connected database
 // and calls entitySupplier for each row to apply values to Entity.
 func Select(c *Context, entitySupplier func() Entity, filter Filter) ([]Entity, error) {
 
