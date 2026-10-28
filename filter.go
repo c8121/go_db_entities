@@ -53,24 +53,27 @@ func (f *Filter) GetFilterValues() []any {
 
 	values := make([]any, 0)
 
-	if IsSlice(f.Value) {
+	if len(f.FieldName) > 0 {
+		if IsSlice(f.Value) {
 
-		if f.Comparison != 0 && f.Comparison != CompareIn && f.Comparison != CompareEqual {
-			log.Printf("WARN: Ignore invalid comparison for slice-field %s", f.FieldName)
+			if f.Comparison != 0 && f.Comparison != CompareIn && f.Comparison != CompareEqual {
+				log.Printf("WARN: Ignore invalid comparison for slice-field %s", f.FieldName)
+			}
+
+			v := reflect.ValueOf(f.Value)
+			for i := 0; i < v.Len(); i++ {
+				values = append(values, v.Index(i).Interface())
+			}
+
+		} else {
+
+			values = append(values, f.Value)
+
 		}
+	}
 
-		v := reflect.ValueOf(f.Value)
-		for i := 0; i < v.Len(); i++ {
-			values = append(values, v.Index(i).Interface())
-		}
-
-	} else {
-
-		values = append(values, f.Value)
-		if f.Next != nil {
-			values = append(values, f.Next.GetFilterValues()...)
-		}
-
+	if f.Next != nil {
+		values = append(values, f.Next.GetFilterValues()...)
 	}
 
 	return values
