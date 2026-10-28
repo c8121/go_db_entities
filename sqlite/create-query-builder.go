@@ -34,29 +34,42 @@ func (b CreateQueryBuilder) GetCreateTableQuery(c *go_db_entities.Context, e go_
 		if len(fields) > 0 {
 			fields += ", "
 		}
-		fields += field.Name
+
+		if hasFieldProps && len(fieldProps.Name) > 0 {
+			fields += fieldProps.Name
+		} else {
+			fields += field.Name
+		}
+
+		typeName := field.Type.Name()
+		if hasFieldProps && len(fieldProps.Type) > 0 {
+			typeName = fieldProps.Type
+		}
 
 		if field.Name == "Id" {
 			fields += " integer PRIMARY KEY"
 		} else {
-			switch field.Type.Name() {
+			switch typeName {
 			case "int", "int8", "int16", "int32", "int64":
 				fields += " Integer"
 				if hasFieldProps && fieldProps.Size > 0 {
 					fields += fmt.Sprintf("(%d)", fieldProps.Size)
 				}
-				break
+
 			case "string":
 				fields += " Text"
 				if hasFieldProps && fieldProps.Size > 0 {
 					fields += fmt.Sprintf("(%d)", fieldProps.Size)
 				}
-				break
+
 			case "Time":
 				fields += " DateTime"
-				break
+
+			case "Embedding":
+				fields += fmt.Sprintf(" float[%d]", fieldProps.Size)
+
 			default:
-				panic("Unknown Type: " + field.Type.Name())
+				panic("Unknown Type: \"" + typeName + "\", Field: " + field.Name + "(" + field.Type.Name() + ")")
 			}
 		}
 	}
