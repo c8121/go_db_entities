@@ -13,6 +13,7 @@ const (
 	CompareLessEqual   = 5
 	CompareContains    = 6
 	CompareIn          = 7
+	CompareNotEqual    = 8
 
 	ConjunctAnd = 1
 	ConjunctOr  = 2
