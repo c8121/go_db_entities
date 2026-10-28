@@ -49,6 +49,8 @@ func (b FilterQueryBuilder) GetFilterStatement(c *go_db_entities.Context, f go_d
 			sql += "<="
 		case go_db_entities.CompareContains:
 			sql += " like "
+		case go_db_entities.CompareNotEqual:
+			sql += " <> "
 		default:
 			sql += "="
 		}
