@@ -12,7 +12,12 @@ type SelectQueryBuilder struct {
 
 func (b SelectQueryBuilder) GetSelectQuery(c *go_db_entities.Context, e go_db_entities.Entity, filter go_db_entities.Filter) string {
 
-	sql := "SELECT * FROM " + e.GetEntityName()
+	sql := "SELECT "
+	if filter.Distinct {
+		sql += "DISTINCT "
+	}
+
+	sql += "* FROM " + e.GetEntityName()
 
 	where := c.QueryBuilder.FilterQueryBuilder.GetFilterStatement(c, filter)
 	if len(where) > 0 {

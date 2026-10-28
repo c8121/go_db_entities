@@ -173,3 +173,58 @@ func TestFilterWithInClause(t *testing.T) {
 		fmt.Println(i, row)
 	}
 }
+
+func TestFilterWithDistinctClause(t *testing.T) {
+
+	ctx := OpenTestDB()
+	defer go_db_entities.CloseOrLog(ctx)
+
+	err := go_db_entities.Create(ctx, &Person{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = CreateTestPersons(ctx, 100)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	queryBuilder := sqlite.TableQueryBuilder{}
+
+	query := go_db_entities.TableQuery{
+		FieldNames: []string{"StreetNumber"},
+		Entity:     &Person{},
+	}
+
+	sql := queryBuilder.GetTableQueryStatement(ctx, query)
+	fmt.Printf("Query: %s\n", sql)
+	if strings.Contains(sql, "DISTINCT") {
+		t.Errorf("Invalid query: %s", sql)
+	}
+
+	rows, err := go_db_entities.Query(ctx, query)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rows) != 100 {
+		t.Errorf("Invalid results: num=%d, expected=100", len(rows))
+	}
+
+	query.Filter = &go_db_entities.Filter{
+		Distinct: true,
+	}
+
+	sql = queryBuilder.GetTableQueryStatement(ctx, query)
+	fmt.Printf("Query: %s\n", sql)
+	if !strings.Contains(sql, "DISTINCT") {
+		t.Errorf("Invalid query: %s", sql)
+	}
+
+	rows, err = go_db_entities.Query(ctx, query)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rows) != 1 {
+		t.Errorf("Invalid results: num=%d, expected=1", len(rows))
+	}
+}

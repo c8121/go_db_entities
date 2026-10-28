@@ -11,7 +11,12 @@ type TableQueryBuilder struct {
 
 func (b TableQueryBuilder) GetTableQueryStatement(c *go_db_entities.Context, q go_db_entities.TableQuery) string {
 
-	sql := "SELECT " + b.GetFields(c, q) + " " +
+	sql := "SELECT "
+	if q.Filter != nil && q.Filter.Distinct {
+		sql += "DISTINCT "
+	}
+
+	sql += b.GetFields(c, q) + " " +
 		"FROM " + b.GetFrom(c, q)
 
 	where := b.GetWhere(c, q)

@@ -35,7 +35,8 @@ type Filter struct {
 	Offset int
 	Count  int
 
-	OrderBy []string
+	OrderBy  []string
+	Distinct bool
 }
 
 func NewFilter(fieldName string, comparison int, value any) *Filter {
