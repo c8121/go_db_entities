@@ -2,9 +2,14 @@ package sqlite
 
 import (
 	"encoding/json"
+	"fmt"
 )
 
 type EmbeddingFieldMapping struct {
+}
+
+func (m *EmbeddingFieldMapping) GetFieldName(name string) string {
+	return fmt.Sprintf("vec_to_json(%s)", name)
 }
 
 func (m *EmbeddingFieldMapping) GetFieldParameter() string {

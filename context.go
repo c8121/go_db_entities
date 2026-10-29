@@ -7,7 +7,7 @@ import (
 type Context struct {
 	DB            *sql.DB
 	QueryBuilder  *QueryBuilder
-	FieldMappings map[string]FieldMapping //Fieldname -> TypeMapping
+	FieldMappings map[string]FieldMapping //Field-name -> TypeMapping
 }
 
 func (c *Context) GetTypeMapping(typeName string) FieldMapping {

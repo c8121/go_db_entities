@@ -17,7 +17,9 @@ func (b SelectQueryBuilder) GetSelectQuery(c *go_db_entities.Context, e go_db_en
 		sql += "DISTINCT "
 	}
 
-	sql += "* FROM " + e.GetEntityName()
+	sql += b.GetFields(c, e)
+
+	sql += " FROM " + e.GetEntityName()
 
 	where := c.QueryBuilder.FilterQueryBuilder.GetFilterStatement(c, filter)
 	if len(where) > 0 {
@@ -47,4 +49,28 @@ func (b SelectQueryBuilder) GetSelectQuery(c *go_db_entities.Context, e go_db_en
 
 	sql += ";"
 	return sql
+}
+
+func (b SelectQueryBuilder) GetFields(c *go_db_entities.Context, e go_db_entities.Entity) string {
+
+	fields := ""
+	properties := go_db_entities.GetProperties(c, e)
+	entityFields := go_db_entities.GetVisibleFields(e)
+	for _, field := range entityFields {
+		if len(fields) > 0 {
+			fields += ", "
+		}
+
+		fieldProps, hasFieldProps := properties[field.Name]
+
+		typeName := field.Type.Name()
+		if hasFieldProps && len(fieldProps.Type) > 0 {
+			typeName = fieldProps.Type
+		}
+
+		typeMapping := c.GetTypeMapping(typeName)
+		fields += typeMapping.GetFieldName(field.Name)
+	}
+
+	return fields
 }
