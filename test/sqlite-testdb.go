@@ -22,6 +22,6 @@ func OpenTestDB() *go_db_entities.Context {
 	return go_db_entities.NewContext(
 		db,
 		sqlite.NewQueryBuilder(),
-		sqlite.NewTypeMapping(),
+		sqlite.NewFieldMapping(),
 	)
 }
