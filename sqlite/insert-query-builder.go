@@ -13,6 +13,7 @@ func (b InsertQueryBuilder) GetInsertQuery(c *go_db_entities.Context, e go_db_en
 
 	fields := ""
 	params := ""
+	properties := go_db_entities.GetProperties(c, e)
 	entityFields := go_db_entities.GetVisibleFields(e)
 	for _, field := range entityFields {
 		if field.Name != "Id" {
@@ -21,7 +22,16 @@ func (b InsertQueryBuilder) GetInsertQuery(c *go_db_entities.Context, e go_db_en
 				params += ", "
 			}
 			fields += field.Name
-			params += "?"
+
+			fieldProps, hasFieldProps := properties[field.Name]
+
+			typeName := field.Type.Name()
+			if hasFieldProps && len(fieldProps.Type) > 0 {
+				typeName = fieldProps.Type
+			}
+
+			typeMapping := c.GetTypeMapping(typeName)
+			params += typeMapping.GetFieldParameter()
 		}
 	}
 

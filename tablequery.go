@@ -69,7 +69,7 @@ func Query(c *Context, q TableQuery) ([][]any, error) {
 
 	for rows.Next() {
 
-		scanArgs := make([]interface{}, len(columns))
+		scanArgs := make([]any, len(columns))
 		for i := range scanArgs {
 			scanArgs[i] = &scanArgs[i]
 		}

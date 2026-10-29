@@ -31,6 +31,7 @@ func Update(c *Context, e Entity) error {
 	}
 	defer CloseOrLog(stmt)
 
+	properties := GetProperties(c, e)
 	entityFields := GetVisibleFields(e)
 	v := reflect.ValueOf(GetAsStruct(e))
 
@@ -38,7 +39,21 @@ func Update(c *Context, e Entity) error {
 	var p = 0
 	for _, field := range entityFields {
 		if field.Name != "Id" {
+
+			fieldProps, hasFieldProps := properties[field.Name]
+			typeName := field.Type.Name()
+			if hasFieldProps && len(fieldProps.Type) > 0 {
+				typeName = fieldProps.Type
+			}
+
 			values[p] = v.FieldByName(field.Name).Interface()
+
+			typeMapping := c.GetTypeMapping(typeName)
+			values[p], err = typeMapping.ConvertStructValue(values[p])
+			if err != nil {
+				return err
+			}
+
 			p++
 		}
 	}

@@ -37,6 +37,7 @@ func Select(c *Context, entitySupplier func() Entity, filter Filter) ([]Entity, 
 	defer CloseOrLog(rows)
 
 	var entities = make([]Entity, 0)
+	var properties map[string]FieldProperties = nil
 	var entityFields []reflect.StructField = nil
 
 	for rows.Next() {
@@ -53,19 +54,37 @@ func Select(c *Context, entitySupplier func() Entity, filter Filter) ([]Entity, 
 
 		structValue := destValue.Elem()
 		if entityFields == nil {
+			properties = GetProperties(c, e)
 			entityFields = GetVisibleFields(e)
 		}
-
-		scanArgs := make([]interface{}, len(entityFields))
-
-		for i, field := range entityFields {
-			destField := structValue.FieldByName(field.Name)
-			scanArgs[i] = destField.Addr().Interface()
+		scanArgs := make([]any, len(entityFields))
+		scanValues := make([]any, len(entityFields))
+		for i := 0; i < len(entityFields); i++ {
+			scanArgs[i] = &scanValues[i]
 		}
 
 		err = rows.Scan(scanArgs...)
 		if err != nil {
 			return nil, err
+		}
+
+		for i := 0; i < len(entityFields); i++ {
+			field := entityFields[i]
+			destField := structValue.FieldByName(field.Name)
+
+			fieldProps, hasFieldProps := properties[field.Name]
+			typeName := field.Type.Name()
+			if hasFieldProps && len(fieldProps.Type) > 0 {
+				typeName = fieldProps.Type
+			}
+
+			typeMapping := c.GetTypeMapping(typeName)
+			value, err := typeMapping.ConvertDbValue(scanValues[i])
+			if err != nil {
+				return nil, err
+			}
+			dbVal := reflect.ValueOf(value)
+			destField.Set(dbVal.Convert(destField.Type()))
 		}
 
 		entities = append(entities, e)
