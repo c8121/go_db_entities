@@ -96,3 +96,25 @@ if err != nil {
     t.Fatal(err)
 }
 ```
+
+### Create queries over multiple tables
+
+```go
+personQuery := &go_db_entities.TableQuery{
+    FieldNames: []string{"LastName"},
+    Entity:     &Person{},
+    Filter:     go_db_entities.NewFilter("Person.Id", go_db_entities.CompareGreater, 90),
+}
+numberQuery := &go_db_entities.TableQuery{
+    FieldNames: []string{"Name", "Value"},
+    Entity:     &PersonContactChannel{},
+}
+personQuery.AddJoin(go_db_entities.TableQueryJoin{
+    TableQuery: numberQuery,
+    Type:       go_db_entities.LeftJoin,
+    OnFrom:     "Id",
+    OnTo:       "PersonId",
+})
+
+rows, err := go_db_entities.Query(ctx, *personQuery)
+```
