@@ -1,7 +1,7 @@
 package go_db_entities
 
 import (
-	"log"
+	"log/slog"
 	"reflect"
 )
 
@@ -22,11 +22,11 @@ func Update(c *Context, e Entity) error {
 	}
 
 	sql := c.QueryBuilder.UpdateQueryBuilder.GetUpdateQuery(c, e)
-	log.Println(sql)
+	slog.Debug(sql)
 
 	stmt, err := c.DB.Prepare(sql)
 	if err != nil {
-		log.Printf("Error preparing statement: %s", err)
+		slog.Error("Preparing statement failed", "error", err)
 		return err
 	}
 	defer CloseOrLog(stmt)
@@ -58,11 +58,11 @@ func Update(c *Context, e Entity) error {
 		}
 	}
 	values[p] = e.GetId()
-	log.Println(values)
+	slog.Debug("Using values", "v", values)
 
 	_, err = stmt.Exec(values...)
 	if err != nil {
-		log.Printf("Error executing query: %s", err)
+		slog.Error("Executing query failed", "error", err)
 		return err
 	}
 

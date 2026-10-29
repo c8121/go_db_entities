@@ -1,7 +1,7 @@
 package go_db_entities
 
 import (
-	"log"
+	"log/slog"
 	"reflect"
 )
 
@@ -34,7 +34,7 @@ func Load(c *Context, e Entity, filter Filter) error {
 	if len(items) == 0 {
 		return ErrNotFound
 	} else if len(items) > 1 {
-		log.Printf("WARNING: Multiple entities found with filter: %v", filter)
+		slog.Warn("Multiple entities found", "filter", filter)
 	}
 
 	return nil

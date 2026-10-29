@@ -2,7 +2,7 @@ package sqlite
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 
 	"github.com/c8121/go_db_entities"
 )
@@ -44,7 +44,7 @@ func (b SelectQueryBuilder) GetSelectQuery(c *go_db_entities.Context, e go_db_en
 	}
 
 	if filter.Next != nil && filter.Next.Offset > 0 && filter.Next.Count > 0 {
-		log.Printf("Warn: Ignoring offest/count of nested filter")
+		slog.Warn("Ignoring offest/count of nested filter")
 	}
 
 	sql += ";"

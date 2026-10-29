@@ -1,7 +1,7 @@
 package go_db_entities
 
 import (
-	"log"
+	"log/slog"
 	"strconv"
 	"strings"
 )
@@ -32,11 +32,11 @@ func Create(c *Context, e Entity) error {
 
 	ddl := c.QueryBuilder.CreateQueryBuilder.GetCreateQueries(c, e)
 	for _, query := range ddl {
-		log.Println(query)
+		slog.Debug(query)
 
 		_, err := c.DB.Exec(query)
 		if err != nil {
-			log.Println(err)
+			slog.Error("DB.Exec failed", "error", err)
 			return err
 		}
 	}
@@ -71,7 +71,7 @@ func GetProperties(c *Context, e Entity) map[string]FieldProperties {
 					var err error
 					props.Size, err = strconv.Atoi(strings.TrimSpace(item[len("size:"):]))
 					if err != nil {
-						log.Printf("Error in tag \"%s\", cannot parse size: %s", tag, err)
+						slog.Error("Error in tag \"%s\", cannot parse size: %s", tag, err)
 					}
 				}
 			}

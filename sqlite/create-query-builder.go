@@ -22,7 +22,7 @@ func (b CreateQueryBuilder) GetCreateQueries(c *go_db_entities.Context, e go_db_
 
 func (b CreateQueryBuilder) GetCreateTableQuery(c *go_db_entities.Context, e go_db_entities.Entity) string {
 
-	sql := "CREATE TABLE " + e.GetEntityName()
+	sql := "CREATE TABLE IF NOT EXISTS " + e.GetEntityName()
 
 	fields := ""
 	properties := go_db_entities.GetProperties(c, e)
@@ -87,7 +87,7 @@ func (b CreateQueryBuilder) GetCreateIndexQueries(c *go_db_entities.Context, e g
 		fieldProps, hasFieldProps := properties[field.Name]
 		if hasFieldProps {
 			if fieldProps.Index {
-				queries = append(queries, "CREATE INDEX "+
+				queries = append(queries, "CREATE INDEX IF NOT EXISTS "+
 					"IDX_"+e.GetEntityName()+"_"+field.Name+" "+
 					"ON "+e.GetEntityName()+"("+field.Name+")")
 			}

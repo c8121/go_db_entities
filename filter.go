@@ -1,7 +1,7 @@
 package go_db_entities
 
 import (
-	"log"
+	"log/slog"
 	"reflect"
 )
 
@@ -59,7 +59,7 @@ func (f *Filter) GetFilterValues() []any {
 		if IsSlice(f.Value) {
 
 			if f.Comparison != 0 && f.Comparison != CompareIn && f.Comparison != CompareEqual {
-				log.Printf("WARN: Ignore invalid comparison for slice-field %s", f.FieldName)
+				slog.Warn("Ignore invalid comparison for slice-field", "name", f.FieldName)
 			}
 
 			v := reflect.ValueOf(f.Value)

@@ -1,7 +1,7 @@
 package sqlite
 
 import (
-	"log"
+	"log/slog"
 	"reflect"
 
 	"github.com/c8121/go_db_entities"
@@ -21,7 +21,7 @@ func (b FilterQueryBuilder) GetFilterStatement(c *go_db_entities.Context, f go_d
 	if go_db_entities.IsSlice(f.Value) {
 
 		if f.Comparison != 0 && f.Comparison != go_db_entities.CompareIn && f.Comparison != go_db_entities.CompareEqual {
-			log.Printf("WARN: Ignore invalid comparison for slice-field %s", f.FieldName)
+			slog.Warn("Ignore invalid comparison for slice-field", "name", f.FieldName)
 		}
 
 		values := reflect.ValueOf(f.Value)

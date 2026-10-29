@@ -1,7 +1,7 @@
 package go_db_entities
 
 import (
-	"log"
+	"log/slog"
 	"reflect"
 )
 
@@ -17,21 +17,21 @@ func Select(c *Context, entitySupplier func() Entity, filter Filter) ([]Entity, 
 	e := entitySupplier()
 
 	sql := c.QueryBuilder.SelectQueryBuilder.GetSelectQuery(c, e, filter)
-	log.Println(sql)
+	slog.Debug(sql)
 
 	stmt, err := c.DB.Prepare(sql)
 	if err != nil {
-		log.Printf("Error preparing statement: %s", err)
+		slog.Error("Preparing statement failed", "error", err)
 		return nil, err
 	}
 	defer CloseOrLog(stmt)
 
 	args := filter.GetFilterValues()
-	log.Println(args)
+	slog.Debug("Using args", "v", args)
 
 	rows, err := stmt.Query(args...)
 	if err != nil {
-		log.Printf("Error executing query: %s", err)
+		slog.Error("Executing query failed", "error", err)
 		return nil, err
 	}
 	defer CloseOrLog(rows)

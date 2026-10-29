@@ -1,7 +1,7 @@
 package go_db_entities
 
 import (
-	"log"
+	"log/slog"
 	"reflect"
 )
 
@@ -22,11 +22,11 @@ func Insert(c *Context, e Entity) error {
 	}
 
 	sql := c.QueryBuilder.InsertQueryBuilder.GetInsertQuery(c, e)
-	log.Println(sql)
+	slog.Debug(sql)
 
 	stmt, err := c.DB.Prepare(sql)
 	if err != nil {
-		log.Printf("Error preparing statement: %s", err)
+		slog.Error("Preparing statement failed", "error", err)
 		return err
 	}
 	defer CloseOrLog(stmt)
@@ -58,17 +58,17 @@ func Insert(c *Context, e Entity) error {
 			p++
 		}
 	}
-	log.Println(values)
+	slog.Debug("Using values", "v", values)
 
 	res, err := stmt.Exec(values...)
 	if err != nil {
-		log.Printf("Error executing query: %s", err)
+		slog.Error("Executing query failed", "error", err)
 		return err
 	}
 
 	id, err := res.LastInsertId()
 	if err != nil {
-		log.Printf("Error retrieving id: %s", err)
+		slog.Error("Retrieving id failed", "error", err)
 		return err
 	}
 

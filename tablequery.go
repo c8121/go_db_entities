@@ -1,7 +1,7 @@
 package go_db_entities
 
 import (
-	"log"
+	"log/slog"
 )
 
 const (
@@ -40,28 +40,28 @@ func (q *TableQuery) AddJoin(join TableQueryJoin) {
 func Query(c *Context, q TableQuery) ([][]any, error) {
 
 	sql := c.QueryBuilder.TableQueryBuilder.GetTableQueryStatement(c, q)
-	log.Println(sql)
+	slog.Debug(sql)
 
 	stmt, err := c.DB.Prepare(sql)
 	if err != nil {
-		log.Printf("Error preparing statement: %s", err)
+		slog.Error("Preparing statement failed", "error", err)
 		return nil, err
 	}
 	defer CloseOrLog(stmt)
 
 	args := q.GetFilterValues()
-	log.Println(args)
+	slog.Debug("Using args", "v", args)
 
 	rows, err := stmt.Query(args...)
 	if err != nil {
-		log.Printf("Error executing query: %s", err)
+		slog.Error("Executing query failed", "error", err)
 		return nil, err
 	}
 	defer CloseOrLog(rows)
 
 	columns, err := rows.Columns()
 	if err != nil {
-		log.Printf("Error getting columns: %s", err)
+		slog.Error("Getting columns failed", "error", err)
 		return nil, err
 	}
 
