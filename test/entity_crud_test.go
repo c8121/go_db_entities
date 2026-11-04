@@ -11,7 +11,7 @@ import (
 func TestEntityCRUD(t *testing.T) {
 
 	ctx := OpenTestDB()
-	defer go_db_entities.CloseOrLog(ctx)
+	defer go_db_entities.CloseOrLog(ctx.DB)
 
 	person := &Person{
 		FirstName:    "John",

@@ -29,7 +29,7 @@ func (t *TestEntity) SetId(id int64) {
 func TestFieldProps(t *testing.T) {
 
 	ctx := OpenTestDB()
-	defer go_db_entities.CloseOrLog(ctx)
+	defer go_db_entities.CloseOrLog(ctx.DB)
 
 	sql := ctx.QueryBuilder.CreateQueryBuilder.GetCreateQueries(ctx, &TestEntity{})[0]
 	if !strings.Contains(sql, " Name ") {

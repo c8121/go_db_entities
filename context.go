@@ -18,12 +18,17 @@ func (c *Context) GetTypeMapping(typeName string) FieldMapping {
 	return mapping
 }
 
-func (c *Context) Close() error {
-	return c.DB.Close()
-}
-
 // NewContext takes database connection and DDL/SQL-Builders required to read/write database.
 func NewContext(database *sql.DB, queryBuilder *QueryBuilder, typeMapping map[string]FieldMapping) *Context {
+
+	if database == nil {
+		panic("database cannot be nil")
+	}
+
+	if queryBuilder == nil {
+		panic("queryBuilder cannot be nil")
+	}
+
 	return &Context{
 		DB:            database,
 		QueryBuilder:  queryBuilder,

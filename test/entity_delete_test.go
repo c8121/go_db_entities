@@ -10,7 +10,7 @@ import (
 func TestEntityDelete(t *testing.T) {
 
 	ctx := OpenTestDB()
-	defer go_db_entities.CloseOrLog(ctx)
+	defer go_db_entities.CloseOrLog(ctx.DB)
 
 	err := go_db_entities.Create(ctx, &Person{})
 	if err != nil {
@@ -46,7 +46,7 @@ func TestEntityDelete(t *testing.T) {
 func TestEntityDeleteBatch(t *testing.T) {
 
 	ctx := OpenTestDB()
-	defer go_db_entities.CloseOrLog(ctx)
+	defer go_db_entities.CloseOrLog(ctx.DB)
 
 	err := go_db_entities.Create(ctx, &Person{})
 	if err != nil {

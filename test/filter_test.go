@@ -12,7 +12,7 @@ import (
 func TestFilter(t *testing.T) {
 
 	ctx := OpenTestDB()
-	defer go_db_entities.CloseOrLog(ctx)
+	defer go_db_entities.CloseOrLog(ctx.DB)
 
 	queryBuilder := sqlite.FilterQueryBuilder{}
 
@@ -55,7 +55,7 @@ func TestFilter(t *testing.T) {
 func TestFilterWithoutWhere(t *testing.T) {
 
 	ctx := OpenTestDB()
-	defer go_db_entities.CloseOrLog(ctx)
+	defer go_db_entities.CloseOrLog(ctx.DB)
 
 	queryBuilder := sqlite.TableQueryBuilder{}
 
@@ -78,7 +78,7 @@ func TestFilterWithoutWhere(t *testing.T) {
 func TestFilterWithOrderBy(t *testing.T) {
 
 	ctx := OpenTestDB()
-	defer go_db_entities.CloseOrLog(ctx)
+	defer go_db_entities.CloseOrLog(ctx.DB)
 
 	err := go_db_entities.Create(ctx, &Person{})
 	if err != nil {
@@ -134,7 +134,7 @@ func TestFilterWithOrderBy(t *testing.T) {
 func TestFilterWithInClause(t *testing.T) {
 
 	ctx := OpenTestDB()
-	defer go_db_entities.CloseOrLog(ctx)
+	defer go_db_entities.CloseOrLog(ctx.DB)
 
 	err := go_db_entities.Create(ctx, &Person{})
 	if err != nil {
@@ -177,7 +177,7 @@ func TestFilterWithInClause(t *testing.T) {
 func TestFilterWithDistinctClause(t *testing.T) {
 
 	ctx := OpenTestDB()
-	defer go_db_entities.CloseOrLog(ctx)
+	defer go_db_entities.CloseOrLog(ctx.DB)
 
 	err := go_db_entities.Create(ctx, &Person{})
 	if err != nil {

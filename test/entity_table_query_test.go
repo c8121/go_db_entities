@@ -10,7 +10,7 @@ import (
 func TestEntityTableQuery(t *testing.T) {
 
 	ctx := OpenTestDB()
-	defer go_db_entities.CloseOrLog(ctx)
+	defer go_db_entities.CloseOrLog(ctx.DB)
 
 	err := go_db_entities.Create(ctx, &Person{})
 	if err != nil {
