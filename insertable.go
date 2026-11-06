@@ -40,12 +40,7 @@ func Insert(c *Context, e Entity) error {
 	for _, field := range entityFields {
 		if field.Name != "Id" {
 
-			fieldProps, hasFieldProps := properties[field.Name]
-
-			typeName := field.Type.Name()
-			if hasFieldProps && len(fieldProps.Type) > 0 {
-				typeName = fieldProps.Type
-			}
+			typeName := properties.GetFieldType(field.Name, field.Type.Name())
 
 			values[p] = v.FieldByName(field.Name).Interface()
 

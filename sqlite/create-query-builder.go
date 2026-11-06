@@ -29,22 +29,14 @@ func (b CreateQueryBuilder) GetCreateTableQuery(c *go_db_entities.Context, e go_
 	entityFields := go_db_entities.GetVisibleFields(e)
 	for _, field := range entityFields {
 
-		fieldProps, hasFieldProps := properties[field.Name]
-
 		if len(fields) > 0 {
 			fields += ", "
 		}
 
-		if hasFieldProps && len(fieldProps.Name) > 0 {
-			fields += fieldProps.Name
-		} else {
-			fields += field.Name
-		}
+		fields += properties.GetFieldName(field.Name)
 
-		typeName := field.Type.Name()
-		if hasFieldProps && len(fieldProps.Type) > 0 {
-			typeName = fieldProps.Type
-		}
+		typeName := properties.GetFieldType(field.Name, field.Type.Name())
+		size := properties.GetFieldSize(field.Name)
 
 		if field.Name == "Id" {
 			fields += " integer PRIMARY KEY"
@@ -52,21 +44,21 @@ func (b CreateQueryBuilder) GetCreateTableQuery(c *go_db_entities.Context, e go_
 			switch typeName {
 			case "int", "int8", "int16", "int32", "int64":
 				fields += " Integer"
-				if hasFieldProps && fieldProps.Size > 0 {
-					fields += fmt.Sprintf("(%d)", fieldProps.Size)
+				if size > 0 {
+					fields += fmt.Sprintf("(%d)", size)
 				}
 
 			case "string":
 				fields += " Text"
-				if hasFieldProps && fieldProps.Size > 0 {
-					fields += fmt.Sprintf("(%d)", fieldProps.Size)
+				if size > 0 {
+					fields += fmt.Sprintf("(%d)", size)
 				}
 
 			case "Time":
 				fields += " DateTime"
 
 			case "Embedding":
-				fields += fmt.Sprintf(" float[%d]", fieldProps.Size)
+				fields += fmt.Sprintf(" float[%d]", size)
 
 			default:
 				panic("Unknown Type: \"" + typeName + "\", Field: " + field.Name + "(" + field.Type.Name() + ")")
@@ -84,13 +76,13 @@ func (b CreateQueryBuilder) GetCreateIndexQueries(c *go_db_entities.Context, e g
 	properties := go_db_entities.GetProperties(c, e)
 	entityFields := go_db_entities.GetVisibleFields(e)
 	for _, field := range entityFields {
-		fieldProps, hasFieldProps := properties[field.Name]
-		if hasFieldProps {
-			if fieldProps.Index {
-				queries = append(queries, "CREATE INDEX IF NOT EXISTS "+
-					"IDX_"+e.GetEntityName()+"_"+field.Name+" "+
-					"ON "+e.GetEntityName()+"("+field.Name+")")
-			}
+		if properties.GetFieldIndex(field.Name) {
+
+			fieldName := properties.GetFieldName(field.Name)
+
+			queries = append(queries, "CREATE INDEX IF NOT EXISTS "+
+				"IDX_"+e.GetEntityName()+"_"+fieldName+" "+
+				"ON "+e.GetEntityName()+"("+fieldName+")")
 		}
 	}
 

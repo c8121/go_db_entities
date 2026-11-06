@@ -40,11 +40,7 @@ func Update(c *Context, e Entity) error {
 	for _, field := range entityFields {
 		if field.Name != "Id" {
 
-			fieldProps, hasFieldProps := properties[field.Name]
-			typeName := field.Type.Name()
-			if hasFieldProps && len(fieldProps.Type) > 0 {
-				typeName = fieldProps.Type
-			}
+			typeName := properties.GetFieldType(field.Name, field.Type.Name())
 
 			values[p] = v.FieldByName(field.Name).Interface()
 
@@ -60,10 +56,19 @@ func Update(c *Context, e Entity) error {
 	values[p] = e.GetId()
 	slog.Debug("Using values", "v", values)
 
-	_, err = stmt.Exec(values...)
+	res, err := stmt.Exec(values...)
 	if err != nil {
 		slog.Error("Executing query failed", "error", err)
 		return err
+	}
+
+	cnt, err := res.RowsAffected()
+	if err != nil {
+		slog.Error("Getting affected rows failed", "error", err)
+		return err
+	}
+	if cnt == 0 {
+		return ErrNotFound
 	}
 
 	return nil

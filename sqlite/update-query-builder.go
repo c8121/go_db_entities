@@ -20,14 +20,9 @@ func (b UpdateQueryBuilder) GetUpdateQuery(c *go_db_entities.Context, e go_db_en
 				fields += ", "
 			}
 
-			fields += field.Name + "="
+			fields += properties.GetFieldName(field.Name) + "="
 
-			fieldProps, hasFieldProps := properties[field.Name]
-
-			typeName := field.Type.Name()
-			if hasFieldProps && len(fieldProps.Type) > 0 {
-				typeName = fieldProps.Type
-			}
+			typeName := properties.GetFieldType(field.Name, field.Type.Name())
 
 			typeMapping := c.GetTypeMapping(typeName)
 			fields += typeMapping.GetFieldParameter()

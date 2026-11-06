@@ -13,10 +13,50 @@ type FieldProperties struct {
 	Index bool
 }
 
-// GetProperties reads tags from struct fields to create FieldProperties
-func GetProperties(c *Context, e Entity) map[string]FieldProperties {
+type EntityProperties struct {
+	fieldProperties map[string]FieldProperties
+}
 
-	properties := make(map[string]FieldProperties)
+func (p *EntityProperties) GetFieldProperties(name string) (FieldProperties, bool) {
+	properties, ok := p.fieldProperties[name]
+	return properties, ok
+}
+
+func (p *EntityProperties) GetFieldName(name string) string {
+	properties, ok := p.fieldProperties[name]
+	if ok && properties.Name != "" {
+		return properties.Name
+	}
+	return name
+}
+
+func (p *EntityProperties) GetFieldType(name string, defaultName string) string {
+	properties, ok := p.fieldProperties[name]
+	if ok && properties.Type != "" {
+		return properties.Type
+	}
+	return defaultName
+}
+
+func (p *EntityProperties) GetFieldSize(name string) int {
+	properties, ok := p.fieldProperties[name]
+	if ok {
+		return properties.Size
+	}
+	return 0
+}
+
+func (p *EntityProperties) GetFieldIndex(name string) bool {
+	properties, ok := p.fieldProperties[name]
+	return ok && properties.Index
+}
+
+// GetProperties reads tags from struct fields to create FieldProperties
+func GetProperties(c *Context, e Entity) *EntityProperties {
+
+	properties := &EntityProperties{
+		fieldProperties: make(map[string]FieldProperties),
+	}
 
 	entityFields := GetVisibleFields(e)
 	for _, field := range entityFields {
@@ -40,12 +80,12 @@ func GetProperties(c *Context, e Entity) map[string]FieldProperties {
 					var err error
 					props.Size, err = strconv.Atoi(strings.TrimSpace(item[len("size:"):]))
 					if err != nil {
-						slog.Error("Error in tag \"%s\", cannot parse size: %s", tag, err)
+						slog.Error("Error in tag, cannot parse size", "tag", tag, "error", err)
 					}
 				}
 			}
 
-			properties[field.Name] = props
+			properties.fieldProperties[field.Name] = props
 		}
 	}
 

@@ -37,7 +37,7 @@ func Select(c *Context, entitySupplier func() Entity, filter Filter) ([]Entity, 
 	defer CloseOrLog(rows)
 
 	var entities = make([]Entity, 0)
-	var properties map[string]FieldProperties = nil
+	var properties *EntityProperties = nil
 	var entityFields []reflect.StructField = nil
 
 	for rows.Next() {
@@ -72,11 +72,7 @@ func Select(c *Context, entitySupplier func() Entity, filter Filter) ([]Entity, 
 			field := entityFields[i]
 			destField := structValue.FieldByName(field.Name)
 
-			fieldProps, hasFieldProps := properties[field.Name]
-			typeName := field.Type.Name()
-			if hasFieldProps && len(fieldProps.Type) > 0 {
-				typeName = fieldProps.Type
-			}
+			typeName := properties.GetFieldType(field.Name, field.Type.Name())
 
 			typeMapping := c.GetTypeMapping(typeName)
 			value, err := typeMapping.ConvertDbValue(scanValues[i])
@@ -88,6 +84,11 @@ func Select(c *Context, entitySupplier func() Entity, filter Filter) ([]Entity, 
 		}
 
 		entities = append(entities, e)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return nil, err
 	}
 
 	if len(entities) == 0 {

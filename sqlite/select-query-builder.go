@@ -61,12 +61,7 @@ func (b SelectQueryBuilder) GetFields(c *go_db_entities.Context, e go_db_entitie
 			fields += ", "
 		}
 
-		fieldProps, hasFieldProps := properties[field.Name]
-
-		typeName := field.Type.Name()
-		if hasFieldProps && len(fieldProps.Type) > 0 {
-			typeName = fieldProps.Type
-		}
+		typeName := properties.GetFieldType(field.Name, field.Type.Name())
 
 		typeMapping := c.GetTypeMapping(typeName)
 		fields += typeMapping.GetFieldName(field.Name)
