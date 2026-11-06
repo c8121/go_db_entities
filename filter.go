@@ -6,14 +6,14 @@ import (
 )
 
 const (
-	CompareEqual       = 1
-	CompareGreater     = 2
-	CompareGraterEqual = 3
-	CompareLess        = 4
-	CompareLessEqual   = 5
-	CompareContains    = 6
-	CompareIn          = 7
-	CompareNotEqual    = 8
+	CompareEqual        = 1
+	CompareGreater      = 2
+	CompareGreaterEqual = 3
+	CompareLess         = 4
+	CompareLessEqual    = 5
+	CompareContains     = 6
+	CompareIn           = 7
+	CompareNotEqual     = 8
 
 	ConjunctAnd = 1
 	ConjunctOr  = 2

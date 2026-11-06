@@ -43,4 +43,14 @@ func TestFieldProps(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+
+	sql = ctx.QueryBuilder.InsertQueryBuilder.GetInsertQuery(ctx, &TestEntity{})
+	if !strings.Contains(sql, "(Name,") {
+		t.Errorf("TestFieldProps failed: 'Renamed' not changed to 'Name'")
+	}
+
+	sql = ctx.QueryBuilder.UpdateQueryBuilder.GetUpdateQuery(ctx, &TestEntity{})
+	if !strings.Contains(sql, " Name=") {
+		t.Errorf("TestFieldProps failed: 'Renamed' not changed to 'Name'")
+	}
 }

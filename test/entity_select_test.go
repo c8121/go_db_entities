@@ -26,7 +26,7 @@ func TestEntitySelect(t *testing.T) {
 		return &Person{}
 	}
 
-	filter := go_db_entities.NewFilter("Id", go_db_entities.CompareGraterEqual, 10)
+	filter := go_db_entities.NewFilter("Id", go_db_entities.CompareGreaterEqual, 10)
 	filter.Offset = 10
 	filter.Count = 10
 

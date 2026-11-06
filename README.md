@@ -1,4 +1,4 @@
-# go_db_entites
+# go_db_entities
 
 Maps structs to database.
 
@@ -18,7 +18,7 @@ if err != nil {
     panic(err)
 }
 
-ctx := go_db_entities.NewContext(db, sqlite.NewQueryBuilder())
+ctx := go_db_entities.NewContext(db, sqlite.NewQueryBuilder(), sqlite.NewFieldMapping())
 
 ```
 
@@ -91,7 +91,7 @@ itemSupplier := func() go_db_entities.Entity {
     return &Person{}
 }
 
-list, err := go_db_entities.Select(ctx, itemSupplier, *go_db_entities.NewFilter("Id", go_db_entities.CompareGraterEqual, 0))
+list, err := go_db_entities.Select(ctx, itemSupplier, *go_db_entities.NewFilter("Id", go_db_entities.CompareGreaterEqual, 0))
 if err != nil {
     t.Fatal(err)
 }

@@ -228,3 +228,25 @@ func TestFilterWithDistinctClause(t *testing.T) {
 		t.Errorf("Invalid results: num=%d, expected=1", len(rows))
 	}
 }
+
+func TestEmptyFilterWithJoin(t *testing.T) {
+
+	ctx := OpenTestDB()
+	defer go_db_entities.CloseOrLog(ctx.DB)
+
+	filter := go_db_entities.NewFilter("", go_db_entities.CompareEqual, nil)
+	filter.Next = go_db_entities.NewFilter("FirstName", go_db_entities.CompareEqual, "Jon")
+
+	sql := ctx.QueryBuilder.FilterQueryBuilder.GetFilterStatement(ctx, *filter)
+	if !strings.HasPrefix(sql, "(FirstName") {
+		t.Errorf("Invalid filter: %s", sql)
+	}
+
+	values := filter.GetFilterValues()
+	if len(values) != 1 {
+		t.Errorf("Invalid results: num=%d, expected=1", len(values))
+	}
+	if values[0] != "Jon" {
+		t.Errorf("Invalid results: value=%s", values[0])
+	}
+}
