@@ -2,7 +2,6 @@ package go_db_entities
 
 import (
 	"log/slog"
-	"reflect"
 )
 
 // DeleteQueryBuilder generates SQL-Statements.
@@ -32,10 +31,8 @@ func Delete(c *Context, e Entity) error {
 	}
 	defer CloseOrLog(stmt)
 
-	v := reflect.ValueOf(GetAsStruct(e))
-
 	values := make([]any, 1)
-	values[0] = v.FieldByName("Id").Interface()
+	values[0] = e.GetId()
 	slog.Debug("Using values", "v", values)
 
 	_, err = stmt.Exec(values...)
