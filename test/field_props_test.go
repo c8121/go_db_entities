@@ -53,4 +53,9 @@ func TestFieldProps(t *testing.T) {
 	if !strings.Contains(sql, " Name=") {
 		t.Errorf("TestFieldProps failed: 'Renamed' not changed to 'Name'")
 	}
+
+	sql = ctx.QueryBuilder.SelectQueryBuilder.GetSelectQuery(ctx, &TestEntity{}, *go_db_entities.NewIdFilter(1))
+	if !strings.Contains(sql, " Name,") {
+		t.Errorf("TestFieldProps failed: 'Renamed' not changed to 'Name'")
+	}
 }
