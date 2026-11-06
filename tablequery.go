@@ -82,6 +82,11 @@ func Query(c *Context, q TableQuery) ([][]any, error) {
 		result = append(result, scanArgs)
 	}
 
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+
 	if len(result) == 0 {
 		return result, ErrNotFound
 	}
