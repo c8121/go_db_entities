@@ -1,103 +1,290 @@
 # go_db_entities
 
-Maps structs to database.
-
-Database agnostic (but currently only SQLite), no SQL required on usage.
-
-## Usage
-
-### Create Context
-
-A Context holds a database connection and query builders.
-
-```go
-    
-url := "file:TestDb?mode=memory&cache=shared"
-db, err := sql.Open("sqlite3", url)
-if err != nil {
-    panic(err)
-}
-
-ctx := go_db_entities.NewContext(db, sqlite.NewQueryBuilder(), sqlite.NewFieldMapping())
-
-```
-
-### Create a struct with required field and functions
-
-In order to make a struct storable into a database, 
-create struct with field `Id` and functions `GetEntityName`, `GetId` and `SetId`
+A small, dependency-free (despite sqlite) Go library that maps plain structs to SQL tables.
+No code generation, no query DSL, no SQL strings in your application code.
 
 ```go
 type Person struct {
-    Id           int64
-    FirstName    string
-    LastName     string
+    Id        int64
+    FirstName string
+    LastName  string
 }
 
-// GetEntityName returns the database table name
-func (p *Person) GetEntityName() string {
-    return "Person"
+go_db_entities.Create(ctx, &Person{})                       // CREATE TABLE
+go_db_entities.Save(ctx, &Person{FirstName: "John"})        // INSERT (or UPDATE)
+go_db_entities.Load(ctx, p, *go_db_entities.NewIdFilter(1)) // SELECT ... WHERE Id=?
+```
+
+## Why this library?
+
+Most Go ORMs are large frameworks: they bring code generators, their own
+query languages, migration tools, relation systems, hooks and a long list of
+transitive dependencies. That is the right tool for big applications, but
+overkill if all you want is to store and load structs.
+
+`go_db_entities` takes the opposite approach:
+
+- **Lightweight.** A small codebase you can read in an afternoon. When
+  something behaves unexpectedly, you can find out why by reading the code.
+- **No dependencies.** The library itself uses only the Go standard library
+  (`database/sql`, `reflect`, `log/slog`). You choose and import the database
+  driver yourself. The only third-party module in `go.mod`
+  (`mattn/go-sqlite3`) is used by the tests.
+- **Plain structs.** An entity is a struct with an `Id` field and three tiny
+  methods. No base type to embed, no registration step, no generated code.
+- **Transparent SQL.** The SQL it generates is simple, readable and logged at
+  debug level. Values are always passed as bound parameters.
+- **Built on `database/sql`.** You pass in your own `*sql.DB`, so connection
+  pooling, timeouts, drivers and raw queries stay under your control.
+- **Pluggable by design.** SQL generation and type conversion are behind small
+  interfaces. SQLite is included; other databases can be added without
+  touching the core.
+- **Handles non-standard column types.** Custom field mappings convert Go
+  values to and from database representations. This is used, for example, to
+  store `[]float32` embeddings with the [sqlite-vec](https://github.com/asg017/sqlite-vec)
+  extension.
+
+It is **not** a full-featured ORM. See [Current limitations](#current-limitations)
+and [When not to use it](#when-not-to-use-it).
+
+## Features
+
+- Create tables and indexes from struct definitions
+- Insert, update, save (insert-or-update), load, select and delete
+- Batch delete by filter
+- Composable filters: comparisons, `IN` lists, `AND`/`OR` chaining, ordering,
+  offset/count, `DISTINCT`
+- Queries across multiple tables with `INNER`/`LEFT` joins
+- Struct tags for column name, type, size and indexes
+- Custom type mappings (included: `Embedding` for sqlite-vec)
+
+## Installation
+
+```sh
+go get github.com/c8121/go_db_entities
+```
+
+Requires Go 1.25 or newer (see `go.mod`). You also need a `database/sql`
+driver for your database. The tests use
+[`mattn/go-sqlite3`](https://github.com/mattn/go-sqlite3) (requires cgo).
+
+## Quick start
+
+```go
+package main
+
+import (
+    "database/sql"
+    "log"
+
+    _ "github.com/mattn/go-sqlite3"
+
+    "github.com/c8121/go_db_entities"
+    "github.com/c8121/go_db_entities/sqlite"
+)
+
+type Person struct {
+    Id        int64
+    FirstName string
+    LastName  string
 }
 
-func (p *Person) GetId() int64 {
-    return p.Id
-}
+func (p *Person) GetEntityName() string { return "Person" } // table name
+func (p *Person) GetId() int64          { return p.Id }
+func (p *Person) SetId(id int64)        { p.Id = id }
 
-func (p *Person) SetId(id int64) {
-    p.Id = id
+func main() {
+    db, err := sql.Open("sqlite3", "file:app.db")
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer db.Close()
+
+    ctx := go_db_entities.NewContext(db, sqlite.NewQueryBuilder(), sqlite.NewFieldMapping())
+
+    // Create the table (CREATE TABLE IF NOT EXISTS)
+    if err := go_db_entities.Create(ctx, &Person{}); err != nil {
+        log.Fatal(err)
+    }
+
+    // Insert: Id is 0, so a new row is created and the Id is set
+    person := &Person{FirstName: "John", LastName: "Doe"}
+    if err := go_db_entities.Save(ctx, person); err != nil {
+        log.Fatal(err)
+    }
+
+    // Load it again
+    loaded := &Person{}
+    if err := go_db_entities.Load(ctx, loaded, *go_db_entities.NewIdFilter(person.Id)); err != nil {
+        log.Fatal(err)
+    }
+    log.Printf("%+v", loaded)
 }
 ```
 
-### Create Database table
+## Usage
 
-If desired, the database table can be created automatically
+### The Context
+
+A `Context` bundles the database connection, the SQL builders for your
+database and the field mappings:
 
 ```go
-err := go_db_entities.Create(ctx, person)
-if err != nil {
-    panic(err)
+ctx := go_db_entities.NewContext(db, sqlite.NewQueryBuilder(), sqlite.NewFieldMapping())
+```
+
+A `Context` holds no mutable state of its own and can be shared by goroutines,
+as long as you do not modify its mappings afterwards.
+
+### Defining entities
+
+An entity is a struct with an `int64` field named `Id` and three methods:
+
+```go
+type Person struct {
+    Id        int64
+    FirstName string
+    LastName  string
+}
+
+func (p *Person) GetEntityName() string { return "Person" } // table name
+func (p *Person) GetId() int64          { return p.Id }
+func (p *Person) SetId(id int64)        { p.Id = id }
+```
+
+Every exported field becomes a column. `Id` becomes `INTEGER PRIMARY KEY`.
+
+Supported field types: `int`, `int8`–`int64`, `string`, `time.Time` and, with
+a custom mapping, anything you map yourself (see [Custom type mappings](#custom-type-mappings)).
+
+### Struct tags
+
+Column options are set with the `dbe` tag, separated by commas:
+
+| Option        | Meaning                                         | Example               |
+|---------------|-------------------------------------------------|-----------------------|
+| `name: <col>` | Use a different column name                     | `dbe:"name: surname"` |
+| `type: <T>`   | Override the type used for mapping and DDL      | `dbe:"type: Embedding"` |
+| `size: <n>`   | Size for the column type (e.g. vector length)   | `dbe:"size: 512"`     |
+| `index`       | Create an index on the column                   | `dbe:"index"`         |
+
+```go
+type Document struct {
+    Id        int64
+    Title     string    `dbe:"index"`
+    Embedding []float32 `dbe:"type: Embedding, size: 512"`
 }
 ```
 
-### Save to database
+Note that SQLite does not enforce sizes such as `Text(100)`; they are
+informational.
+
+### Create, save, update, delete
 
 ```go
-person := &Person{
-    FirstName:    "John",
-    LastName:     "Doe",
-}
+// Create table and indexes
+err := go_db_entities.Create(ctx, &Person{})
 
-err := go_db_entities.Save(ctx, person)
-if err != nil {
-    panic(err)
-}
+// Insert (Id == 0) or update (Id != 0)
+err = go_db_entities.Save(ctx, person)
+
+// Or call explicitly
+err = go_db_entities.Insert(ctx, person) // ErrExists if Id != 0
+err = go_db_entities.Update(ctx, person) // ErrNotFound if no row was updated
+
+// Delete one entity (Id is reset to 0 afterwards)
+err = go_db_entities.Delete(ctx, person)
+
+// Delete many
+err = go_db_entities.DeleteBatch(ctx, &Person{},
+    *go_db_entities.NewFilter("LastName", go_db_entities.CompareEqual, "Doe"))
 ```
 
-### Load one entity from database
+### Load one entity
 
 ```go
-id := 1
 person := &Person{}
-err := go_db_entities.Load(ctx, person, *go_db_entities.NewIdFilter(id))
-if err != nil {
-    t.Fatal(err)
+err := go_db_entities.Load(ctx, person, *go_db_entities.NewIdFilter(1))
+if errors.Is(err, go_db_entities.ErrNotFound) {
+    // no such row
 }
 ```
 
-### Load multiple rows from database
+### Select many entities
+
+`Select` needs a supplier function that creates a fresh entity for each row:
 
 ```go
-itemSupplier := func() go_db_entities.Entity {
-    return &Person{}
+supplier := func() go_db_entities.Entity { return &Person{} }
+
+entities, err := go_db_entities.Select(ctx, supplier,
+    *go_db_entities.NewFilter("Id", go_db_entities.CompareGreaterEqual, 10))
+if errors.Is(err, go_db_entities.ErrNotFound) {
+    // no rows matched (entities is empty)
+} else if err != nil {
+    return err
 }
 
-list, err := go_db_entities.Select(ctx, itemSupplier, *go_db_entities.NewFilter("Id", go_db_entities.CompareGreaterEqual, 0))
-if err != nil {
-    t.Fatal(err)
+for _, e := range entities {
+    person := e.(*Person)
+    fmt.Println(person.FirstName, person.LastName)
 }
 ```
 
-### Create queries over multiple tables
+### Filters
+
+A `Filter` describes one condition and can be chained to the next one:
+
+```go
+// (FirstName = 'John' AND (LastName = 'Doe' OR LastName = 'Smith'))
+filter := go_db_entities.NewFilter("FirstName", go_db_entities.CompareEqual, "John")
+
+lastName := go_db_entities.NewFilter("LastName", go_db_entities.CompareEqual, "Doe")
+lastName.Next = go_db_entities.NewFilter("LastName", go_db_entities.CompareEqual, "Smith")
+lastName.NextConjunction = go_db_entities.ConjunctOr
+
+filter.Next = lastName // NextConjunction defaults to AND
+```
+
+Comparisons:
+
+| Constant               | SQL                                    |
+|------------------------|----------------------------------------|
+| `CompareEqual`         | `=` (default)                          |
+| `CompareNotEqual`      | `<>`                                   |
+| `CompareGreater`       | `>`                                    |
+| `CompareGreaterEqual`  | `>=`                                   |
+| `CompareLess`          | `<`                                    |
+| `CompareLessEqual`     | `<=`                                   |
+| `CompareContains`      | `LIKE` (add the `%` wildcards yourself)|
+| `CompareIn`            | `IN (...)`, used automatically when the value is a slice |
+
+```go
+// Id IN (1, 2, 3)
+filter := go_db_entities.NewFilter("Id", go_db_entities.CompareIn, []int64{1, 2, 3})
+```
+
+Ordering, paging and `DISTINCT` are set on the (first) filter:
+
+```go
+filter := go_db_entities.Filter{
+    FieldName:  "Id",
+    Comparison: go_db_entities.CompareGreater,
+    Value:      100,
+    OrderBy:    []string{"LastName", "FirstName DESC"},
+    Offset:     20,
+    Count:      10, // always set Count together with Offset
+    Distinct:   false,
+}
+```
+
+An empty `Filter{}` (no `FieldName`) selects all rows.
+
+### Queries over multiple tables
+
+`Query` joins tables and returns raw rows as `[][]any`, in the order of the
+selected columns. Qualify field names in filters with the table name
+(`Person.Id`) to avoid ambiguity.
 
 ```go
 personQuery := &go_db_entities.TableQuery{
@@ -105,16 +292,133 @@ personQuery := &go_db_entities.TableQuery{
     Entity:     &Person{},
     Filter:     go_db_entities.NewFilter("Person.Id", go_db_entities.CompareGreater, 90),
 }
+
 numberQuery := &go_db_entities.TableQuery{
     FieldNames: []string{"Name", "Value"},
     Entity:     &PersonContactChannel{},
 }
+
 personQuery.AddJoin(go_db_entities.TableQueryJoin{
     TableQuery: numberQuery,
-    Type:       go_db_entities.LeftJoin,
+    Type:       go_db_entities.LeftJoin, // or InnerJoin
     OnFrom:     "Id",
     OnTo:       "PersonId",
 })
 
 rows, err := go_db_entities.Query(ctx, *personQuery)
+for _, row := range rows {
+    fmt.Println(row...) // LastName, Name, Value
+}
 ```
+
+Order, offset, count and `DISTINCT` are read from the filter of the main
+query. Filters of joined queries are added to the `WHERE` clause.
+
+### Custom type mappings
+
+A `FieldMapping` controls how a field is named in `SELECT` statements, which
+SQL parameter is used for it and how values are converted in both directions:
+
+```go
+type FieldMapping interface {
+    GetFieldName(name string) string
+    GetFieldParameter() string
+    ConvertStructValue(value any) (any, error)
+    ConvertDbValue(value any) (any, error)
+}
+```
+
+Mappings are registered by type name in the map passed to `NewContext`.
+`sqlite.NewFieldMapping()` registers `Embedding`, which stores a `[]float32`
+as a sqlite-vec vector (`vec_f32(?)` on write, `vec_to_json(...)` on read).
+This needs the [sqlite-vec](https://github.com/asg017/sqlite-vec) extension
+to be loaded in your SQLite connection.
+
+### Errors
+
+| Error                      | Meaning                                              |
+|----------------------------|------------------------------------------------------|
+| `ErrNil`                   | A `nil` entity was passed                            |
+| `ErrNotFound`              | No row found (`Load`, `Select`, `Query`, `Update`, `Delete` with `Id == 0`) |
+| `ErrExists`                | `Insert` was called with an entity that already has an Id |
+| `ErrMustBePointerToStruct` | The entity supplier did not return a pointer to a struct |
+
+Use `errors.Is` to check for them. Note that `Select` and `Query` return
+`ErrNotFound` for an empty result set.
+
+### Logging
+
+The library logs through the standard `log/slog` package. At debug level it
+logs every SQL statement and its parameter values. Do not enable debug logging
+in production if your data is sensitive.
+
+## How it works
+
+`Context` holds a `QueryBuilder`, a struct of small interfaces, one per kind
+of statement:
+
+```
+CreateQueryBuilder   DDL for tables and indexes
+InsertQueryBuilder   INSERT
+UpdateQueryBuilder   UPDATE
+DeleteQueryBuilder   DELETE (single and batch)
+SelectQueryBuilder   SELECT for entities
+FilterQueryBuilder   WHERE clauses from filters
+TableQueryBuilder    SELECT with joins
+```
+
+The core package reads struct fields via reflection, builds the argument
+lists and runs the statements through `database/sql`. The SQL text itself
+comes from the builders. To support another database, implement these
+interfaces in a new package (see `sqlite/` as a reference) and pass the
+result to `NewContext`. The generated SQL currently uses `?` placeholders.
+
+## Current limitations
+
+This project is intentionally small. Be aware of the following before using it:
+
+- **Supported column types are limited** to integers, `string`, `time.Time`
+  and custom mappings. Other types (`bool`, floats, `[]byte`, pointers,
+  named types) are not supported yet, and `Create` panics on them.
+- **No NULL support.** Reading a NULL column into a struct field is not
+  handled.
+- **Struct layout:** entities need an exported `int64` field named `Id`.
+  Unexported fields and embedded structs are not supported, and there is no
+  tag to skip a field.
+- **No transactions** and no `context.Context` support: all operations run
+  directly on the `*sql.DB`.
+- **No migrations, relations, hooks or lazy loading.** `Create` only issues
+  `CREATE TABLE IF NOT EXISTS`.
+- **Paging:** always set `Count` when using `Offset`, otherwise no rows are
+  returned.
+- **Joins:** filters on joined tables are applied in the `WHERE` clause, so a
+  `LEFT JOIN` filtered on a joined column behaves like an inner join. Filters
+  of nested joins are not applied.
+- Ids are `INTEGER PRIMARY KEY` without `AUTOINCREMENT`, so SQLite may reuse
+  the Id of a deleted last row.
+
+## Security notes
+
+Values are always passed as bound parameters and are safe against SQL
+injection. **Identifiers are not.** Table names, field names, `OrderBy`
+entries, join fields and the values of the `name:` and `type:` tags are
+inserted into the SQL text as they are. Never pass untrusted input (for
+example a sort column from a URL parameter) to these without validating it
+against a fixed list of allowed names first.
+
+## When not to use it
+
+Choose a full ORM or a query builder such as GORM, ent, sqlc or Squirrel if
+you need migrations, relations, transactions across several operations,
+nullable columns or support for many databases today. Use `go_db_entities` if
+you want a small, understandable layer for storing and loading structs with
+as few moving parts as possible.
+
+## Running the tests
+
+```sh
+go test ./...
+```
+
+The tests use an in-memory SQLite database and need cgo
+(for `mattn/go-sqlite3`).
