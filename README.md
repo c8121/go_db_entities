@@ -50,6 +50,7 @@ and [When not to use it](#when-not-to-use-it).
 ## Features
 
 - Create tables and indexes from struct definitions
+- Add columns that are missing in an existing table (`Validate`)
 - Insert, update, save (insert-or-update), load, select and delete
 - Batch delete by filter
 - Composable filters: comparisons, `IN` lists, `AND`/`OR` chaining, ordering,
@@ -64,7 +65,7 @@ and [When not to use it](#when-not-to-use-it).
 go get github.com/c8121/go_db_entities
 ```
 
-Requires Go 1.25 or newer (see `go.mod`). You also need a `database/sql`
+Requires Go 1.25.1 or newer (see `go.mod`). You also need a `database/sql`
 driver for your database. The tests use
 [`mattn/go-sqlite3`](https://github.com/mattn/go-sqlite3) (requires cgo).
 
@@ -133,8 +134,13 @@ database and the field mappings:
 ctx := go_db_entities.NewContext(db, sqlite.NewQueryBuilder(), sqlite.NewFieldMapping())
 ```
 
+`NewContext` panics if `db` or the query builder is `nil`. Types without a
+registered mapping use the `DefaultFieldMapping`, which passes values through
+unchanged.
+
 A `Context` holds no mutable state of its own and can be shared by goroutines,
-as long as you do not modify its mappings afterwards.
+as long as you do not modify its mappings afterwards. Note that it is not a
+`context.Context`; see [Current limitations](#current-limitations).
 
 ### Defining entities
 
@@ -152,14 +158,16 @@ func (p *Person) GetId() int64          { return p.Id }
 func (p *Person) SetId(id int64)        { p.Id = id }
 ```
 
-Every exported field becomes a column. `Id` becomes `INTEGER PRIMARY KEY`.
+Every exported field becomes a column. `Id` becomes `integer PRIMARY KEY`.
 
 Supported field types: `int`, `int8`–`int64`, `string`, `time.Time` and, with
 a custom mapping, anything you map yourself (see [Custom type mappings](#custom-type-mappings)).
 
 ### Struct tags
 
-Column options are set with the `dbe` tag, separated by commas:
+Column options are set with the `dbe` tag, separated by commas. Option names
+are case-insensitive (`Index`, `index` and `INDEX` are the same), and spaces
+around values are ignored:
 
 | Option        | Meaning                                         | Example               |
 |---------------|-------------------------------------------------|-----------------------|
@@ -176,8 +184,17 @@ type Document struct {
 }
 ```
 
-Note that SQLite does not enforce sizes such as `Text(100)`; they are
-informational.
+Several options can be combined, for example `dbe:"Index, Size: 100"`. The
+value of `type:` is matched case-sensitively against the registered field
+mappings. A `size:` that is not a number is logged as an error and ignored.
+
+The tag affects `CREATE`, `INSERT`, `UPDATE` and `SELECT` statements. Names
+you write yourself, such as filter fields and `TableQuery` field names, are
+used as column names as they are, so use the name from the `name:` option
+there if you set one.
+
+Indexes are created as `IDX_<table>_<column>`. Note that SQLite does not
+enforce sizes such as `Text(100)`; they are informational.
 
 ### Create, save, update, delete
 
@@ -190,7 +207,7 @@ err = go_db_entities.Save(ctx, person)
 
 // Or call explicitly
 err = go_db_entities.Insert(ctx, person) // ErrExists if Id != 0
-err = go_db_entities.Update(ctx, person) // ErrNotFound if no row was updated
+err = go_db_entities.Update(ctx, person) // ErrNotFound if Id == 0 or no row was updated
 
 // Delete one entity (Id is reset to 0 afterwards)
 err = go_db_entities.Delete(ctx, person)
@@ -199,6 +216,35 @@ err = go_db_entities.Delete(ctx, person)
 err = go_db_entities.DeleteBatch(ctx, &Person{},
     *go_db_entities.NewFilter("LastName", go_db_entities.CompareEqual, "Doe"))
 ```
+
+`Delete` does not report an error if no row with that Id exists, and
+`DeleteBatch` does not report how many rows were deleted. `DeleteBatch`
+needs a filter with a `FieldName`; an empty `Filter{}` produces invalid SQL
+and returns a database error.
+
+### Adding missing columns
+
+`Create` only issues `CREATE TABLE IF NOT EXISTS`, so it does not touch a
+table that already exists. If you add a field to a struct later, use
+`Validate` to add the missing columns (and indexes) to the existing table:
+
+```go
+// ALTER TABLE ... ADD COLUMN for every field that has no column yet,
+// plus CREATE INDEX IF NOT EXISTS for indexed fields
+err := go_db_entities.Validate(ctx, &Person{})
+
+// Only check, change nothing
+for _, result := range go_db_entities.CheckFieldsExist(ctx, &Person{}) {
+    if result.Error != nil {
+        fmt.Println("missing or unreadable:", result.FielName, result.Error)
+    }
+}
+```
+
+`CheckFieldsExist` runs a small `SELECT` for every field. Any error counts as
+a missing column, not only "no such column". The table itself must already
+exist (call `Create` first). `Validate` never renames, drops or changes the
+type of a column.
 
 ### Load one entity
 
@@ -209,6 +255,10 @@ if errors.Is(err, go_db_entities.ErrNotFound) {
     // no such row
 }
 ```
+
+`Load` is meant for filters that match exactly one row. If several rows
+match, a warning is logged and the entity ends up with the values of the last
+one.
 
 ### Select many entities
 
@@ -246,6 +296,9 @@ lastName.NextConjunction = go_db_entities.ConjunctOr
 filter.Next = lastName // NextConjunction defaults to AND
 ```
 
+Functions take a `Filter` by value, so dereference the pointer returned by
+`NewFilter` and `NewIdFilter`: `*filter`.
+
 Comparisons:
 
 | Constant               | SQL                                    |
@@ -264,6 +317,9 @@ Comparisons:
 filter := go_db_entities.NewFilter("Id", go_db_entities.CompareIn, []int64{1, 2, 3})
 ```
 
+If the value is a slice, an `IN` list is always generated; any other
+comparison given together with a slice is ignored with a warning.
+
 Ordering, paging and `DISTINCT` are set on the (first) filter:
 
 ```go
@@ -278,13 +334,15 @@ filter := go_db_entities.Filter{
 }
 ```
 
-An empty `Filter{}` (no `FieldName`) selects all rows.
+Offset and count of chained filters are ignored (with a warning). An empty
+`Filter{}` (no `FieldName`) selects all rows.
 
 ### Queries over multiple tables
 
 `Query` joins tables and returns raw rows as `[][]any`, in the order of the
-selected columns. Qualify field names in filters with the table name
-(`Person.Id`) to avoid ambiguity.
+selected columns. Field names are column names as they exist in the database;
+no tags or type mappings are applied to them. Qualify field names in filters
+with the table name (`Person.Id`) to avoid ambiguity.
 
 ```go
 personQuery := &go_db_entities.TableQuery{
@@ -328,18 +386,24 @@ type FieldMapping interface {
 }
 ```
 
-Mappings are registered by type name in the map passed to `NewContext`.
+Mappings are registered by type name in the map passed to `NewContext`. The
+type name is the Go type name of the field (for example `string`), or the
+value of the `type:` tag if there is one.
 `sqlite.NewFieldMapping()` registers `Embedding`, which stores a `[]float32`
 as a sqlite-vec vector (`vec_f32(?)` on write, `vec_to_json(...)` on read).
 This needs the [sqlite-vec](https://github.com/asg017/sqlite-vec) extension
-to be loaded in your SQLite connection.
+to be loaded in your SQLite connection, and the field needs a `size:` (the
+vector length) so that the column can be created as `float[<size>]`.
+
+A new type also needs support in the `CreateQueryBuilder` of your database,
+because that is where Go types are translated to column types.
 
 ### Errors
 
 | Error                      | Meaning                                              |
 |----------------------------|------------------------------------------------------|
 | `ErrNil`                   | A `nil` entity was passed                            |
-| `ErrNotFound`              | No row found (`Load`, `Select`, `Query`, `Update`, `Delete` with `Id == 0`) |
+| `ErrNotFound`              | No row found (`Load`, `Select`, `Query`), `Update` without an Id or without an affected row, `Delete` with `Id == 0` |
 | `ErrExists`                | `Insert` was called with an entity that already has an Id |
 | `ErrMustBePointerToStruct` | The entity supplier did not return a pointer to a struct |
 
@@ -349,8 +413,10 @@ Use `errors.Is` to check for them. Note that `Select` and `Query` return
 ### Logging
 
 The library logs through the standard `log/slog` package. At debug level it
-logs every SQL statement and its parameter values. Do not enable debug logging
-in production if your data is sensitive.
+logs every SQL statement and its parameter values. Failures while preparing
+or executing statements are logged at error level before the error is
+returned. Do not enable debug logging in production if your data is
+sensitive.
 
 ## How it works
 
@@ -358,7 +424,7 @@ in production if your data is sensitive.
 of statement:
 
 ```
-CreateQueryBuilder   DDL for tables and indexes
+CreateQueryBuilder   DDL for tables and indexes, and for missing columns
 InsertQueryBuilder   INSERT
 UpdateQueryBuilder   UPDATE
 DeleteQueryBuilder   DELETE (single and batch)
@@ -373,6 +439,10 @@ comes from the builders. To support another database, implement these
 interfaces in a new package (see `sqlite/` as a reference) and pass the
 result to `NewContext`. The generated SQL currently uses `?` placeholders.
 
+The reflection helpers `GetProperties` (reads the struct tags) and
+`GetVisibleFields` are exported, so builders for other databases can use
+them as the SQLite builders do.
+
 ## Current limitations
 
 This project is intentionally small. Be aware of the following before using it:
@@ -381,14 +451,19 @@ This project is intentionally small. Be aware of the following before using it:
   and custom mappings. Other types (`bool`, floats, `[]byte`, pointers,
   named types) are not supported yet, and `Create` panics on them.
 - **No NULL support.** Reading a NULL column into a struct field is not
-  handled.
+  handled and panics.
 - **Struct layout:** entities need an exported `int64` field named `Id`.
   Unexported fields and embedded structs are not supported, and there is no
   tag to skip a field.
 - **No transactions** and no `context.Context` support: all operations run
   directly on the `*sql.DB`.
-- **No migrations, relations, hooks or lazy loading.** `Create` only issues
-  `CREATE TABLE IF NOT EXISTS`.
+- **Migrations are minimal.** `Create` only issues `CREATE TABLE IF NOT EXISTS`
+  and `Validate` only adds missing columns and indexes. Renaming, dropping
+  and changing columns is up to you.
+- **`Validate` checks struct field names**, not the names set with `name:`.
+  For an existing table with renamed fields it would try to add columns
+  that already exist and fail, so do not use it for such entities yet.
+- **No relations, hooks or lazy loading.**
 - **Paging:** always set `Count` when using `Offset`, otherwise no rows are
   returned.
 - **Joins:** filters on joined tables are applied in the `WHERE` clause, so a
