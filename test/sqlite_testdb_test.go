@@ -11,6 +11,8 @@ import (
 
 func OpenTestDB() *go_db_entities.Context {
 
+	slog.SetLogLoggerLevel(slog.LevelDebug)
+
 	url := "file:TestDb?mode=memory&cache=shared"
 	slog.Info("OpenTestDB", "url", url)
 
