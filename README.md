@@ -450,8 +450,6 @@ This project is intentionally small. Be aware of the following before using it:
 - **Supported column types are limited** to integers, `string`, `time.Time`
   and custom mappings. Other types (`bool`, floats, `[]byte`, pointers,
   named types) are not supported yet, and `Create` panics on them.
-- **No NULL support.** Reading a NULL column into a struct field is not
-  handled and panics.
 - **Struct layout:** entities need an exported `int64` field named `Id`.
   Unexported fields and embedded structs are not supported, and there is no
   tag to skip a field.

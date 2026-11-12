@@ -16,7 +16,7 @@ func TestEntityWithNullValues(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err = ctx.DB.Exec("INSERT INTO PERSON (FirstName, LastName) VALUES (NULL, NULL);")
+	_, err = ctx.DB.Exec("INSERT INTO PERSON (FirstName, LastName, CreatedAt, UpdatedAt) VALUES (NULL, NULL, NULL, NULL);")
 	if err != nil {
 		t.Fatal(err)
 	}

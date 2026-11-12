@@ -79,8 +79,12 @@ func Select(c *Context, entitySupplier func() Entity, filter Filter) ([]Entity, 
 			if err != nil {
 				return nil, err
 			}
-			dbVal := reflect.ValueOf(value)
-			destField.Set(dbVal.Convert(destField.Type()))
+			if value != nil {
+				dbVal := reflect.ValueOf(value)
+				destField.Set(dbVal.Convert(destField.Type()))
+			} else {
+				destField.Set(reflect.Zero(destField.Type()))
+			}
 		}
 
 		entities = append(entities, e)
