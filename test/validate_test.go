@@ -53,7 +53,7 @@ func TestEntityValidation(t *testing.T) {
 	}
 }
 
-func CheckFieldsExistTest(t *testing.T, c *go_db_entities.Context, e go_db_entities.Entity, expectError bool) {
+func CheckFieldsExistTest(t *testing.T, c *go_db_entities.Storage, e go_db_entities.Entity, expectError bool) {
 	hadError := false
 	fields := go_db_entities.CheckFieldsExist(c, e)
 	for _, field := range fields {

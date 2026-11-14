@@ -6,12 +6,12 @@ import (
 
 // DeleteQueryBuilder generates SQL-Statements.
 type DeleteQueryBuilder interface {
-	GetDeleteQuery(c *Context, e Entity) string
-	GetDeleteBatchQuery(c *Context, e Entity, f Filter) string
+	GetDeleteQuery(c *Storage, e Entity) string
+	GetDeleteBatchQuery(c *Storage, e Entity, f Filter) string
 }
 
 // Delete takes an Entity and deletes it from the connected database.
-func Delete(c *Context, e Entity) error {
+func Delete(c *Storage, e Entity) error {
 
 	if e == nil {
 		return ErrNil
@@ -47,7 +47,7 @@ func Delete(c *Context, e Entity) error {
 }
 
 // DeleteBatch takes an Entity and a Filter to delete multiple items from the connected database.
-func DeleteBatch(c *Context, e Entity, f Filter) error {
+func DeleteBatch(c *Storage, e Entity, f Filter) error {
 
 	if e == nil {
 		return ErrNil

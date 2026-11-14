@@ -10,7 +10,7 @@ import (
 type SelectQueryBuilder struct {
 }
 
-func (b SelectQueryBuilder) GetSelectQuery(c *go_db_entities.Context, e go_db_entities.Entity, filter go_db_entities.Filter) string {
+func (b SelectQueryBuilder) GetSelectQuery(c *go_db_entities.Storage, e go_db_entities.Entity, filter go_db_entities.Filter) string {
 
 	sql := "SELECT "
 	if filter.Distinct {
@@ -51,7 +51,7 @@ func (b SelectQueryBuilder) GetSelectQuery(c *go_db_entities.Context, e go_db_en
 	return sql
 }
 
-func (b SelectQueryBuilder) GetFields(c *go_db_entities.Context, e go_db_entities.Entity) string {
+func (b SelectQueryBuilder) GetFields(c *go_db_entities.Storage, e go_db_entities.Entity) string {
 
 	fields := ""
 	properties := go_db_entities.GetProperties(c, e)

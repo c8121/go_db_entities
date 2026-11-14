@@ -4,13 +4,13 @@ import (
 	"database/sql"
 )
 
-type Context struct {
+type Storage struct {
 	DB            *sql.DB
 	QueryBuilder  *QueryBuilder
 	FieldMappings map[string]FieldMapping //Field-name -> TypeMapping
 }
 
-func (c *Context) GetTypeMapping(typeName string) FieldMapping {
+func (c *Storage) GetTypeMapping(typeName string) FieldMapping {
 	mapping, ok := c.FieldMappings[typeName]
 	if !ok {
 		return &DefaultFieldMapping{}
@@ -18,8 +18,8 @@ func (c *Context) GetTypeMapping(typeName string) FieldMapping {
 	return mapping
 }
 
-// NewContext takes database connection and DDL/SQL-Builders required to read/write database.
-func NewContext(database *sql.DB, queryBuilder *QueryBuilder, typeMapping map[string]FieldMapping) *Context {
+// NewStorage takes database connection and DDL/SQL-Builders required to read/write database.
+func NewStorage(database *sql.DB, queryBuilder *QueryBuilder, typeMapping map[string]FieldMapping) *Storage {
 
 	if database == nil {
 		panic("database cannot be nil")
@@ -29,7 +29,7 @@ func NewContext(database *sql.DB, queryBuilder *QueryBuilder, typeMapping map[st
 		panic("queryBuilder cannot be nil")
 	}
 
-	return &Context{
+	return &Storage{
 		DB:            database,
 		QueryBuilder:  queryBuilder,
 		FieldMappings: typeMapping,

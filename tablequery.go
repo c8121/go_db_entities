@@ -11,7 +11,7 @@ const (
 
 // TableQueryBuilder generates SQL-Select-Statements.
 type TableQueryBuilder interface {
-	GetTableQueryStatement(c *Context, q TableQuery) string
+	GetTableQueryStatement(c *Storage, q TableQuery) string
 }
 
 type TableQuery struct {
@@ -37,7 +37,7 @@ func (q *TableQuery) AddJoin(join TableQueryJoin) {
 	q.Join = append(q.Join, join)
 }
 
-func Query(c *Context, q TableQuery) ([][]any, error) {
+func Query(c *Storage, q TableQuery) ([][]any, error) {
 
 	sql := c.QueryBuilder.TableQueryBuilder.GetTableQueryStatement(c, q)
 	slog.Debug(sql)

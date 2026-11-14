@@ -9,7 +9,7 @@ import (
 type TableQueryBuilder struct {
 }
 
-func (b TableQueryBuilder) GetTableQueryStatement(c *go_db_entities.Context, q go_db_entities.TableQuery) string {
+func (b TableQueryBuilder) GetTableQueryStatement(c *go_db_entities.Storage, q go_db_entities.TableQuery) string {
 
 	sql := "SELECT "
 	if q.Filter != nil && q.Filter.Distinct {
@@ -39,7 +39,7 @@ func (b TableQueryBuilder) GetTableQueryStatement(c *go_db_entities.Context, q g
 	return sql
 }
 
-func (b TableQueryBuilder) GetOrderBy(c *go_db_entities.Context, q go_db_entities.TableQuery) string {
+func (b TableQueryBuilder) GetOrderBy(c *go_db_entities.Storage, q go_db_entities.TableQuery) string {
 
 	sql := ""
 
@@ -55,7 +55,7 @@ func (b TableQueryBuilder) GetOrderBy(c *go_db_entities.Context, q go_db_entitie
 	return sql
 }
 
-func (b TableQueryBuilder) GetLimit(c *go_db_entities.Context, q go_db_entities.TableQuery) string {
+func (b TableQueryBuilder) GetLimit(c *go_db_entities.Storage, q go_db_entities.TableQuery) string {
 
 	sql := ""
 
@@ -66,7 +66,7 @@ func (b TableQueryBuilder) GetLimit(c *go_db_entities.Context, q go_db_entities.
 	return sql
 }
 
-func (b TableQueryBuilder) GetWhere(c *go_db_entities.Context, q go_db_entities.TableQuery) string {
+func (b TableQueryBuilder) GetWhere(c *go_db_entities.Storage, q go_db_entities.TableQuery) string {
 
 	sql := ""
 
@@ -88,7 +88,7 @@ func (b TableQueryBuilder) GetWhere(c *go_db_entities.Context, q go_db_entities.
 	return sql
 }
 
-func (b TableQueryBuilder) GetFrom(c *go_db_entities.Context, q go_db_entities.TableQuery) string {
+func (b TableQueryBuilder) GetFrom(c *go_db_entities.Storage, q go_db_entities.TableQuery) string {
 
 	sql := q.Entity.GetEntityName()
 
@@ -111,7 +111,7 @@ func (b TableQueryBuilder) GetFrom(c *go_db_entities.Context, q go_db_entities.T
 	return sql
 }
 
-func (b TableQueryBuilder) GetFields(c *go_db_entities.Context, q go_db_entities.TableQuery) string {
+func (b TableQueryBuilder) GetFields(c *go_db_entities.Storage, q go_db_entities.TableQuery) string {
 
 	sql := ""
 	for _, field := range q.FieldNames {

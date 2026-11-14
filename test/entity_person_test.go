@@ -70,7 +70,7 @@ func (p *PersonCategory) SetId(id int64) {
 	p.Id = id
 }
 
-func CreateTestPersons(ctx *go_db_entities.Context, num int) error {
+func CreateTestPersons(ctx *go_db_entities.Storage, num int) error {
 
 	for i := 0; i < num; i++ {
 		person := &Person{

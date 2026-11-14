@@ -7,11 +7,11 @@ import (
 
 // InsertQueryBuilder generates SQL-Statements.
 type InsertQueryBuilder interface {
-	GetInsertQuery(c *Context, e Entity) string
+	GetInsertQuery(c *Storage, e Entity) string
 }
 
 // Insert takes an Entity and inserts it into the connected database.
-func Insert(c *Context, e Entity) error {
+func Insert(c *Storage, e Entity) error {
 
 	if e == nil {
 		return ErrNil

@@ -7,11 +7,11 @@ import (
 
 // UpdateQueryBuilder generates SQL-Statements.
 type UpdateQueryBuilder interface {
-	GetUpdateQuery(c *Context, e Entity) string
+	GetUpdateQuery(c *Storage, e Entity) string
 }
 
 // Update takes an Entity and updates it into the connected database.
-func Update(c *Context, e Entity) error {
+func Update(c *Storage, e Entity) error {
 
 	if e == nil {
 		return ErrNil

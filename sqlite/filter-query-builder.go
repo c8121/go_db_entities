@@ -10,7 +10,7 @@ import (
 type FilterQueryBuilder struct {
 }
 
-func (b FilterQueryBuilder) GetFilterStatement(c *go_db_entities.Context, f go_db_entities.Filter) string {
+func (b FilterQueryBuilder) GetFilterStatement(c *go_db_entities.Storage, f go_db_entities.Filter) string {
 
 	sql := ""
 

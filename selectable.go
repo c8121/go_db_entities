@@ -7,12 +7,12 @@ import (
 
 // SelectQueryBuilder generates SQL-Statements.
 type SelectQueryBuilder interface {
-	GetSelectQuery(c *Context, e Entity, filter Filter) string
+	GetSelectQuery(c *Storage, e Entity, filter Filter) string
 }
 
 // Select takes a filter, selects rows from the connected database
 // and calls entitySupplier for each row to apply values to Entity.
-func Select(c *Context, entitySupplier func() Entity, filter Filter) ([]Entity, error) {
+func Select(c *Storage, entitySupplier func() Entity, filter Filter) ([]Entity, error) {
 
 	e := entitySupplier()
 

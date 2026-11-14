@@ -15,7 +15,7 @@ type Entity interface {
 }
 
 // Load selects from connected database and applies to given Entity
-func Load(c *Context, e Entity, filter Filter) error {
+func Load(c *Storage, e Entity, filter Filter) error {
 
 	if e == nil {
 		return ErrNil
@@ -41,7 +41,7 @@ func Load(c *Context, e Entity, filter Filter) error {
 }
 
 // Save checks if Entity has an Id and either inserts or updates it in connected database.
-func Save(c *Context, e Entity) error {
+func Save(c *Storage, e Entity) error {
 
 	if e == nil {
 		return ErrNil

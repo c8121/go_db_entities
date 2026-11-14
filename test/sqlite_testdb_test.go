@@ -9,7 +9,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func OpenTestDB() *go_db_entities.Context {
+func OpenTestDB() *go_db_entities.Storage {
 
 	slog.SetLogLoggerLevel(slog.LevelDebug)
 
@@ -21,7 +21,7 @@ func OpenTestDB() *go_db_entities.Context {
 		panic(err)
 	}
 
-	return go_db_entities.NewContext(
+	return go_db_entities.NewStorage(
 		db,
 		sqlite.NewQueryBuilder(),
 		sqlite.NewFieldMapping(),

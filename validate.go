@@ -7,7 +7,7 @@ type CheckFieldResult struct {
 	Error    error
 }
 
-func CheckFieldsExist(c *Context, e Entity) []CheckFieldResult {
+func CheckFieldsExist(c *Storage, e Entity) []CheckFieldResult {
 
 	var list []CheckFieldResult
 

@@ -10,7 +10,7 @@ import (
 type CreateQueryBuilder struct {
 }
 
-func (b CreateQueryBuilder) GetCreateQueries(c *go_db_entities.Context, e go_db_entities.Entity) []string {
+func (b CreateQueryBuilder) GetCreateQueries(c *go_db_entities.Storage, e go_db_entities.Entity) []string {
 
 	ddl := []string{
 		b.GetCreateTableQuery(c, e),
@@ -21,7 +21,7 @@ func (b CreateQueryBuilder) GetCreateQueries(c *go_db_entities.Context, e go_db_
 	return ddl
 }
 
-func (b CreateQueryBuilder) GetCreateMissingFieldsQueries(c *go_db_entities.Context, e go_db_entities.Entity) []string {
+func (b CreateQueryBuilder) GetCreateMissingFieldsQueries(c *go_db_entities.Storage, e go_db_entities.Entity) []string {
 
 	var ddl []string
 
@@ -54,7 +54,7 @@ func (b CreateQueryBuilder) GetCreateMissingFieldsQueries(c *go_db_entities.Cont
 	return ddl
 }
 
-func (b CreateQueryBuilder) GetCreateTableQuery(c *go_db_entities.Context, e go_db_entities.Entity) string {
+func (b CreateQueryBuilder) GetCreateTableQuery(c *go_db_entities.Storage, e go_db_entities.Entity) string {
 
 	sql := "CREATE TABLE IF NOT EXISTS " + e.GetEntityName()
 
@@ -109,7 +109,7 @@ func (b CreateQueryBuilder) CreateFieldQuery(field reflect.StructField, properti
 	return sql
 }
 
-func (b CreateQueryBuilder) GetCreateIndexQueries(c *go_db_entities.Context, e go_db_entities.Entity) []string {
+func (b CreateQueryBuilder) GetCreateIndexQueries(c *go_db_entities.Storage, e go_db_entities.Entity) []string {
 
 	queries := make([]string, 0)
 
