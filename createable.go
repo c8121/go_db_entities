@@ -12,8 +12,8 @@ const (
 type CreateQueryBuilder interface {
 	// GetCreateQueries generates all statements to create a new table incl. indexes
 	GetCreateQueries(c *Storage, e Entity) []string
-	// GetCreateMissingFieldsQueries generated only those statements that are required to create fields which are missing in an existing table.
-	GetCreateMissingFieldsQueries(c *Storage, e Entity) []string
+	// GetAddFieldsQueries generated statements to create fields in an existing table.
+	GetAddFieldsQueries(c *Storage, e Entity, fieldNames []string) []string
 }
 
 // Create takes an Entity and creates the table in the connected database.
@@ -46,7 +46,15 @@ func Validate(c *Storage, e Entity) error {
 		return ErrNil
 	}
 
-	ddl := c.QueryBuilder.CreateQueryBuilder.GetCreateMissingFieldsQueries(c, e)
+	var missingFields []string
+	checkedFields := CheckFieldsExist(c, e)
+	for _, checkedField := range checkedFields {
+		if checkedField.Error != nil {
+			missingFields = append(missingFields, checkedField.FielName)
+		}
+	}
+
+	ddl := c.QueryBuilder.CreateQueryBuilder.GetAddFieldsQueries(c, e, missingFields)
 	for _, query := range ddl {
 		slog.Debug(query)
 

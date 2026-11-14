@@ -21,7 +21,7 @@ func (b CreateQueryBuilder) GetCreateQueries(c *go_db_entities.Storage, e go_db_
 	return ddl
 }
 
-func (b CreateQueryBuilder) GetCreateMissingFieldsQueries(c *go_db_entities.Storage, e go_db_entities.Entity) []string {
+func (b CreateQueryBuilder) GetAddFieldsQueries(c *go_db_entities.Storage, e go_db_entities.Entity, fieldNames []string) []string {
 
 	var ddl []string
 
@@ -32,21 +32,18 @@ func (b CreateQueryBuilder) GetCreateMissingFieldsQueries(c *go_db_entities.Stor
 		entityFieldsMap[field.Name] = field
 	}
 
-	checkedFields := go_db_entities.CheckFieldsExist(c, e)
-	for _, checkedField := range checkedFields {
-		if checkedField.Error != nil {
+	for _, fieldName := range fieldNames {
 
-			field, ok := entityFieldsMap[checkedField.FielName]
-			if !ok {
-				//panic is intentionally here because I assume it makes no sense to use this lib for data it cannot handle
-				panic(fmt.Sprintf("CheckFieldsExist failed for field %s", checkedField.FielName))
-			}
-
-			sql := "ALTER TABLE " + e.GetEntityName() +
-				" ADD COLUMN " + b.CreateFieldQuery(field, properties) + ";"
-
-			ddl = append(ddl, sql)
+		field, ok := entityFieldsMap[fieldName]
+		if !ok {
+			//panic is intentionally here because I assume it makes no sense to use this lib for data it cannot handle
+			panic(fmt.Sprintf("Field not found in Entity: %s", fieldName))
 		}
+
+		sql := "ALTER TABLE " + e.GetEntityName() +
+			" ADD COLUMN " + b.CreateFieldQuery(field, properties) + ";"
+
+		ddl = append(ddl, sql)
 	}
 
 	ddl = append(ddl, b.GetCreateIndexQueries(c, e)...)
