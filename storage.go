@@ -10,14 +10,6 @@ type Storage struct {
 	FieldMappings map[string]FieldMapping //Field-name -> TypeMapping
 }
 
-func (c *Storage) GetTypeMapping(typeName string) FieldMapping {
-	mapping, ok := c.FieldMappings[typeName]
-	if !ok {
-		return &DefaultFieldMapping{}
-	}
-	return mapping
-}
-
 // NewStorage takes database connection and DDL/SQL-Builders required to read/write database.
 func NewStorage(database *sql.DB, queryBuilder *QueryBuilder, typeMapping map[string]FieldMapping) *Storage {
 

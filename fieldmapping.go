@@ -34,3 +34,11 @@ func (m *DefaultFieldMapping) ConvertStructValue(value any) (any, error) {
 func (m *DefaultFieldMapping) ConvertDbValue(value any) (any, error) {
 	return value, nil
 }
+
+func (c *Storage) GetTypeMapping(typeName string) FieldMapping {
+	mapping, ok := c.FieldMappings[typeName]
+	if !ok {
+		return &DefaultFieldMapping{}
+	}
+	return mapping
+}
