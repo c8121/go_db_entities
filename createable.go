@@ -31,9 +31,11 @@ func Create(session *Session, e Entity) error {
 
 		_, err = stmt.Exec()
 		if err != nil {
+			CloseOrLog(stmt)
 			slog.Error("DB.Exec failed", "error", err)
 			return err
 		}
+		CloseOrLog(stmt)
 	}
 
 	return nil
@@ -66,9 +68,11 @@ func Validate(session *Session, e Entity) error {
 
 		_, err = stmt.Exec()
 		if err != nil {
+			CloseOrLog(stmt)
 			slog.Error("DB.Exec failed", "error", err)
 			return err
 		}
+		CloseOrLog(stmt)
 	}
 
 	return nil
