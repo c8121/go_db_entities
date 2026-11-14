@@ -7,11 +7,11 @@ import (
 
 // InsertQueryBuilder generates SQL-Statements.
 type InsertQueryBuilder interface {
-	GetInsertQuery(c *Storage, e Entity) string
+	GetInsertQuery(storage *Storage, e Entity) string
 }
 
 // Insert takes an Entity and inserts it into the connected database.
-func Insert(c *Storage, e Entity) error {
+func Insert(storage *Storage, e Entity) error {
 
 	if e == nil {
 		return ErrNil
@@ -21,17 +21,17 @@ func Insert(c *Storage, e Entity) error {
 		return ErrExists
 	}
 
-	sql := c.QueryBuilder.InsertQueryBuilder.GetInsertQuery(c, e)
+	sql := storage.QueryBuilder.InsertQueryBuilder.GetInsertQuery(storage, e)
 	slog.Debug(sql)
 
-	stmt, err := c.DB.Prepare(sql)
+	stmt, err := storage.DB.Prepare(sql)
 	if err != nil {
 		slog.Error("Preparing statement failed", "error", err)
 		return err
 	}
 	defer CloseOrLog(stmt)
 
-	properties := GetProperties(c, e)
+	properties := GetProperties(storage, e)
 	entityFields := GetVisibleFields(e)
 	v := reflect.ValueOf(GetAsStruct(e))
 
@@ -44,7 +44,7 @@ func Insert(c *Storage, e Entity) error {
 
 			values[p] = v.FieldByName(field.Name).Interface()
 
-			typeMapping := c.GetTypeMapping(typeName)
+			typeMapping := storage.GetTypeMapping(typeName)
 			values[p], err = typeMapping.ConvertStructValue(values[p])
 			if err != nil {
 				return err

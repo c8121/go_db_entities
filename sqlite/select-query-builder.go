@@ -51,10 +51,10 @@ func (b SelectQueryBuilder) GetSelectQuery(c *go_db_entities.Storage, e go_db_en
 	return sql
 }
 
-func (b SelectQueryBuilder) GetFields(c *go_db_entities.Storage, e go_db_entities.Entity) string {
+func (b SelectQueryBuilder) GetFields(storage *go_db_entities.Storage, e go_db_entities.Entity) string {
 
 	fields := ""
-	properties := go_db_entities.GetProperties(c, e)
+	properties := go_db_entities.GetProperties(storage, e)
 	entityFields := go_db_entities.GetVisibleFields(e)
 	for _, field := range entityFields {
 		if len(fields) > 0 {
@@ -64,7 +64,7 @@ func (b SelectQueryBuilder) GetFields(c *go_db_entities.Storage, e go_db_entitie
 		fieldName := properties.GetFieldName(field.Name)
 		typeName := properties.GetFieldType(field.Name, field.Type.Name())
 
-		typeMapping := c.GetTypeMapping(typeName)
+		typeMapping := storage.GetTypeMapping(typeName)
 		fields += typeMapping.GetFieldName(fieldName)
 	}
 

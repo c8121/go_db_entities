@@ -11,7 +11,7 @@ type DeleteQueryBuilder interface {
 }
 
 // Delete takes an Entity and deletes it from the connected database.
-func Delete(c *Storage, e Entity) error {
+func Delete(storage *Storage, e Entity) error {
 
 	if e == nil {
 		return ErrNil
@@ -21,10 +21,10 @@ func Delete(c *Storage, e Entity) error {
 		return ErrNotFound
 	}
 
-	sql := c.QueryBuilder.DeleteQueryBuilder.GetDeleteQuery(c, e)
+	sql := storage.QueryBuilder.DeleteQueryBuilder.GetDeleteQuery(storage, e)
 	slog.Debug(sql)
 
-	stmt, err := c.DB.Prepare(sql)
+	stmt, err := storage.DB.Prepare(sql)
 	if err != nil {
 		slog.Error("Preparing statement failed", "error", err)
 		return err
@@ -47,16 +47,16 @@ func Delete(c *Storage, e Entity) error {
 }
 
 // DeleteBatch takes an Entity and a Filter to delete multiple items from the connected database.
-func DeleteBatch(c *Storage, e Entity, f Filter) error {
+func DeleteBatch(storage *Storage, e Entity, f Filter) error {
 
 	if e == nil {
 		return ErrNil
 	}
 
-	sql := c.QueryBuilder.DeleteQueryBuilder.GetDeleteBatchQuery(c, e, f)
+	sql := storage.QueryBuilder.DeleteQueryBuilder.GetDeleteBatchQuery(storage, e, f)
 	slog.Debug(sql)
 
-	stmt, err := c.DB.Prepare(sql)
+	stmt, err := storage.DB.Prepare(sql)
 	if err != nil {
 		slog.Error("Preparing statement failed", "error", err)
 		return err

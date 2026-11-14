@@ -10,22 +10,22 @@ import (
 type CreateQueryBuilder struct {
 }
 
-func (b CreateQueryBuilder) GetCreateQueries(c *go_db_entities.Storage, e go_db_entities.Entity) []string {
+func (b CreateQueryBuilder) GetCreateQueries(storage *go_db_entities.Storage, e go_db_entities.Entity) []string {
 
 	ddl := []string{
-		b.GetCreateTableQuery(c, e),
+		b.GetCreateTableQuery(storage, e),
 	}
 
-	ddl = append(ddl, b.GetCreateIndexQueries(c, e)...)
+	ddl = append(ddl, b.GetCreateIndexQueries(storage, e)...)
 
 	return ddl
 }
 
-func (b CreateQueryBuilder) GetAddFieldsQueries(c *go_db_entities.Storage, e go_db_entities.Entity, fieldNames []string) []string {
+func (b CreateQueryBuilder) GetAddFieldsQueries(storage *go_db_entities.Storage, e go_db_entities.Entity, fieldNames []string) []string {
 
 	var ddl []string
 
-	properties := go_db_entities.GetProperties(c, e)
+	properties := go_db_entities.GetProperties(storage, e)
 	entityFields := go_db_entities.GetVisibleFields(e)
 	entityFieldsMap := make(map[string]reflect.StructField, len(entityFields))
 	for _, field := range entityFields {
@@ -46,17 +46,17 @@ func (b CreateQueryBuilder) GetAddFieldsQueries(c *go_db_entities.Storage, e go_
 		ddl = append(ddl, sql)
 	}
 
-	ddl = append(ddl, b.GetCreateIndexQueries(c, e)...)
+	ddl = append(ddl, b.GetCreateIndexQueries(storage, e)...)
 
 	return ddl
 }
 
-func (b CreateQueryBuilder) GetCreateTableQuery(c *go_db_entities.Storage, e go_db_entities.Entity) string {
+func (b CreateQueryBuilder) GetCreateTableQuery(storage *go_db_entities.Storage, e go_db_entities.Entity) string {
 
 	sql := "CREATE TABLE IF NOT EXISTS " + e.GetEntityName()
 
 	fields := ""
-	properties := go_db_entities.GetProperties(c, e)
+	properties := go_db_entities.GetProperties(storage, e)
 	entityFields := go_db_entities.GetVisibleFields(e)
 	for _, field := range entityFields {
 
@@ -106,11 +106,11 @@ func (b CreateQueryBuilder) CreateFieldQuery(field reflect.StructField, properti
 	return sql
 }
 
-func (b CreateQueryBuilder) GetCreateIndexQueries(c *go_db_entities.Storage, e go_db_entities.Entity) []string {
+func (b CreateQueryBuilder) GetCreateIndexQueries(storage *go_db_entities.Storage, e go_db_entities.Entity) []string {
 
 	queries := make([]string, 0)
 
-	properties := go_db_entities.GetProperties(c, e)
+	properties := go_db_entities.GetProperties(storage, e)
 	entityFields := go_db_entities.GetVisibleFields(e)
 	for _, field := range entityFields {
 		if properties.GetFieldIndex(field.Name) {

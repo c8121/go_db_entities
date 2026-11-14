@@ -7,7 +7,7 @@ type CheckFieldResult struct {
 	Error    error
 }
 
-func CheckFieldsExist(c *Storage, e Entity) []CheckFieldResult {
+func CheckFieldsExist(storage *Storage, e Entity) []CheckFieldResult {
 
 	var list []CheckFieldResult
 
@@ -20,7 +20,7 @@ func CheckFieldsExist(c *Storage, e Entity) []CheckFieldResult {
 			Filter:     NewIdFilter(-1),
 		}
 
-		_, err := Query(c, *query)
+		_, err := Query(storage, *query)
 		if errors.Is(err, ErrNotFound) {
 			err = nil
 		}

@@ -52,7 +52,7 @@ func (p *EntityProperties) GetFieldIndex(name string) bool {
 }
 
 // GetProperties reads tags from struct fields to create FieldProperties
-func GetProperties(c *Storage, e Entity) *EntityProperties {
+func GetProperties(storage *Storage, e Entity) *EntityProperties {
 
 	properties := &EntityProperties{
 		fieldProperties: make(map[string]FieldProperties),

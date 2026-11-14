@@ -11,7 +11,7 @@ const (
 
 // TableQueryBuilder generates SQL-Select-Statements.
 type TableQueryBuilder interface {
-	GetTableQueryStatement(c *Storage, q TableQuery) string
+	GetTableQueryStatement(storage *Storage, q TableQuery) string
 }
 
 type TableQuery struct {
@@ -37,12 +37,12 @@ func (q *TableQuery) AddJoin(join TableQueryJoin) {
 	q.Join = append(q.Join, join)
 }
 
-func Query(c *Storage, q TableQuery) ([][]any, error) {
+func Query(storage *Storage, q TableQuery) ([][]any, error) {
 
-	sql := c.QueryBuilder.TableQueryBuilder.GetTableQueryStatement(c, q)
+	sql := storage.QueryBuilder.TableQueryBuilder.GetTableQueryStatement(storage, q)
 	slog.Debug(sql)
 
-	stmt, err := c.DB.Prepare(sql)
+	stmt, err := storage.DB.Prepare(sql)
 	if err != nil {
 		slog.Error("Preparing statement failed", "error", err)
 		return nil, err
@@ -94,7 +94,7 @@ func Query(c *Storage, q TableQuery) ([][]any, error) {
 	return result, nil
 }
 
-func (q TableQuery) GetFilterValues() []any {
+func (q *TableQuery) GetFilterValues() []any {
 
 	values := make([]any, 0)
 

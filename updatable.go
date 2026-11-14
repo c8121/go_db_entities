@@ -7,11 +7,11 @@ import (
 
 // UpdateQueryBuilder generates SQL-Statements.
 type UpdateQueryBuilder interface {
-	GetUpdateQuery(c *Storage, e Entity) string
+	GetUpdateQuery(storage *Storage, e Entity) string
 }
 
 // Update takes an Entity and updates it into the connected database.
-func Update(c *Storage, e Entity) error {
+func Update(storage *Storage, e Entity) error {
 
 	if e == nil {
 		return ErrNil
@@ -21,17 +21,17 @@ func Update(c *Storage, e Entity) error {
 		return ErrNotFound
 	}
 
-	sql := c.QueryBuilder.UpdateQueryBuilder.GetUpdateQuery(c, e)
+	sql := storage.QueryBuilder.UpdateQueryBuilder.GetUpdateQuery(storage, e)
 	slog.Debug(sql)
 
-	stmt, err := c.DB.Prepare(sql)
+	stmt, err := storage.DB.Prepare(sql)
 	if err != nil {
 		slog.Error("Preparing statement failed", "error", err)
 		return err
 	}
 	defer CloseOrLog(stmt)
 
-	properties := GetProperties(c, e)
+	properties := GetProperties(storage, e)
 	entityFields := GetVisibleFields(e)
 	v := reflect.ValueOf(GetAsStruct(e))
 
@@ -44,7 +44,7 @@ func Update(c *Storage, e Entity) error {
 
 			values[p] = v.FieldByName(field.Name).Interface()
 
-			typeMapping := c.GetTypeMapping(typeName)
+			typeMapping := storage.GetTypeMapping(typeName)
 			values[p], err = typeMapping.ConvertStructValue(values[p])
 			if err != nil {
 				return err

@@ -40,25 +40,25 @@ func Create(c *Storage, e Entity) error {
 
 // Validate takes an Entity and checks if all fields exist in the table of the connected database.
 // Creates missing fields.
-func Validate(c *Storage, e Entity) error {
+func Validate(storage *Storage, e Entity) error {
 
 	if e == nil {
 		return ErrNil
 	}
 
 	var missingFields []string
-	checkedFields := CheckFieldsExist(c, e)
+	checkedFields := CheckFieldsExist(storage, e)
 	for _, checkedField := range checkedFields {
 		if checkedField.Error != nil {
 			missingFields = append(missingFields, checkedField.FielName)
 		}
 	}
 
-	ddl := c.QueryBuilder.CreateQueryBuilder.GetAddFieldsQueries(c, e, missingFields)
+	ddl := storage.QueryBuilder.CreateQueryBuilder.GetAddFieldsQueries(storage, e, missingFields)
 	for _, query := range ddl {
 		slog.Debug(query)
 
-		_, err := c.DB.Exec(query)
+		_, err := storage.DB.Exec(query)
 		if err != nil {
 			slog.Error("DB.Exec failed", "error", err)
 			return err

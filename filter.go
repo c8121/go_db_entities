@@ -21,7 +21,7 @@ const (
 
 // FilterQueryBuilder generates SQL-WHERE-Statements.
 type FilterQueryBuilder interface {
-	GetFilterStatement(c *Storage, f Filter) string
+	GetFilterStatement(storage *Storage, f Filter) string
 }
 
 type Filter struct {

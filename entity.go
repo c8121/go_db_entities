@@ -15,14 +15,14 @@ type Entity interface {
 }
 
 // Load selects from connected database and applies to given Entity
-func Load(c *Storage, e Entity, filter Filter) error {
+func Load(storage *Storage, e Entity, filter Filter) error {
 
 	if e == nil {
 		return ErrNil
 	}
 
 	items, err := Select(
-		c,
+		storage,
 		func() Entity {
 			return e
 		},
@@ -41,17 +41,17 @@ func Load(c *Storage, e Entity, filter Filter) error {
 }
 
 // Save checks if Entity has an Id and either inserts or updates it in connected database.
-func Save(c *Storage, e Entity) error {
+func Save(storage *Storage, e Entity) error {
 
 	if e == nil {
 		return ErrNil
 	}
 
 	if e.GetId() == 0 {
-		return Insert(c, e)
+		return Insert(storage, e)
 	}
 
-	return Update(c, e)
+	return Update(storage, e)
 }
 
 // GetAsStruct takes an interface (given as parameter to a function for example an unwraps the struct.

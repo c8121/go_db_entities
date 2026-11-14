@@ -7,13 +7,13 @@ import (
 type DeleteQueryBuilder struct {
 }
 
-func (b DeleteQueryBuilder) GetDeleteQuery(c *go_db_entities.Storage, e go_db_entities.Entity) string {
+func (b DeleteQueryBuilder) GetDeleteQuery(storage *go_db_entities.Storage, e go_db_entities.Entity) string {
 
 	sql := "DELETE FROM " + e.GetEntityName() + " WHERE Id=?;"
 	return sql
 }
 
-func (b DeleteQueryBuilder) GetDeleteBatchQuery(c *go_db_entities.Storage, e go_db_entities.Entity, f go_db_entities.Filter) string {
-	sql := "DELETE FROM " + e.GetEntityName() + " WHERE " + c.QueryBuilder.FilterQueryBuilder.GetFilterStatement(c, f) + ";"
+func (b DeleteQueryBuilder) GetDeleteBatchQuery(storage *go_db_entities.Storage, e go_db_entities.Entity, f go_db_entities.Filter) string {
+	sql := "DELETE FROM " + e.GetEntityName() + " WHERE " + storage.QueryBuilder.FilterQueryBuilder.GetFilterStatement(storage, f) + ";"
 	return sql
 }
