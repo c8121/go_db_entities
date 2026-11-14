@@ -6,6 +6,10 @@ import (
 	"strings"
 )
 
+const (
+	StructTagName = "dbe"
+)
+
 type FieldProperties struct {
 	Name  string
 	Type  string
@@ -52,7 +56,7 @@ func (p *EntityProperties) GetFieldIndex(name string) bool {
 }
 
 // GetProperties reads tags from struct fields to create FieldProperties
-func GetProperties(storage *Storage, e Entity) *EntityProperties {
+func GetProperties(session *Session, e Entity) *EntityProperties {
 
 	properties := &EntityProperties{
 		fieldProperties: make(map[string]FieldProperties),

@@ -11,13 +11,15 @@ import (
 
 func TestFilter(t *testing.T) {
 
-	ctx := OpenTestDB()
-	defer go_db_entities.CloseOrLog(ctx.DB)
+	storage := OpenTestDB()
+	defer go_db_entities.CloseOrLog(storage.DB)
+
+	session := go_db_entities.NewSession(storage)
 
 	queryBuilder := sqlite.FilterQueryBuilder{}
 
 	filter := go_db_entities.NewFilter("FirstName", go_db_entities.CompareEqual, "Jon")
-	query := queryBuilder.GetFilterStatement(ctx, *filter)
+	query := queryBuilder.GetFilterStatement(session, *filter)
 	values := filter.GetFilterValues()
 	fmt.Printf("Query: %s, Values: %v\n", query, values)
 	if !strings.Contains(query, "FirstName") || !strings.Contains(query, "=") || !strings.Contains(query, "?") {
@@ -29,7 +31,7 @@ func TestFilter(t *testing.T) {
 
 	lastNameFilter := go_db_entities.NewFilter("LastName", go_db_entities.CompareEqual, "Doe")
 	filter.Next = lastNameFilter
-	query = queryBuilder.GetFilterStatement(ctx, *filter)
+	query = queryBuilder.GetFilterStatement(session, *filter)
 	values = filter.GetFilterValues()
 	fmt.Printf("Query: %s, Values: %v\n", query, values)
 	if !strings.Contains(query, "LastName") || !strings.Contains(query, "AND") {
@@ -41,7 +43,7 @@ func TestFilter(t *testing.T) {
 
 	lastNameFilter.Next = go_db_entities.NewFilter("LastName", go_db_entities.CompareEqual, "Done")
 	lastNameFilter.NextConjunction = go_db_entities.ConjunctOr
-	query = queryBuilder.GetFilterStatement(ctx, *filter)
+	query = queryBuilder.GetFilterStatement(session, *filter)
 	values = filter.GetFilterValues()
 	fmt.Printf("Query: %s, Values: %v\n", query, values)
 	if !strings.Contains(query, "OR") || !strings.Contains(query, "?))") {
@@ -54,8 +56,10 @@ func TestFilter(t *testing.T) {
 
 func TestFilterWithoutWhere(t *testing.T) {
 
-	ctx := OpenTestDB()
-	defer go_db_entities.CloseOrLog(ctx.DB)
+	storage := OpenTestDB()
+	defer go_db_entities.CloseOrLog(storage.DB)
+
+	session := go_db_entities.NewSession(storage)
 
 	queryBuilder := sqlite.TableQueryBuilder{}
 
@@ -68,7 +72,7 @@ func TestFilterWithoutWhere(t *testing.T) {
 		},
 	}
 
-	sql := queryBuilder.GetTableQueryStatement(ctx, query)
+	sql := queryBuilder.GetTableQueryStatement(session, query)
 	fmt.Printf("Query: %s\n", sql)
 	if !strings.Contains(sql, "LIMIT") || strings.Contains(sql, "WHERE") {
 		t.Errorf("Invalid query: %s", sql)
@@ -77,15 +81,17 @@ func TestFilterWithoutWhere(t *testing.T) {
 
 func TestFilterWithOrderBy(t *testing.T) {
 
-	ctx := OpenTestDB()
-	defer go_db_entities.CloseOrLog(ctx.DB)
+	storage := OpenTestDB()
+	defer go_db_entities.CloseOrLog(storage.DB)
 
-	err := go_db_entities.Create(ctx, &Person{})
+	session := go_db_entities.NewSession(storage)
+
+	err := go_db_entities.Create(session, &Person{})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = CreateTestPersons(ctx, 100)
+	err = CreateTestPersons(session, 100)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -100,7 +106,7 @@ func TestFilterWithOrderBy(t *testing.T) {
 		},
 	}
 
-	sql := queryBuilder.GetTableQueryStatement(ctx, query)
+	sql := queryBuilder.GetTableQueryStatement(session, query)
 	fmt.Printf("Query: %s\n", sql)
 	if !strings.Contains(sql, "ORDER BY") || strings.Contains(sql, "WHERE") {
 		t.Errorf("Invalid query: %s", sql)
@@ -108,20 +114,20 @@ func TestFilterWithOrderBy(t *testing.T) {
 
 	query.Filter.FieldName = "FirstName"
 	query.Filter.Value = "Jon_99"
-	sql = queryBuilder.GetTableQueryStatement(ctx, query)
+	sql = queryBuilder.GetTableQueryStatement(session, query)
 	fmt.Printf("Query: %s\n", sql)
 	if !strings.Contains(sql, "ORDER BY") || !strings.Contains(sql, "WHERE") {
 		t.Errorf("Invalid query: %s", sql)
 	}
 
 	query.Filter.Count = 1
-	sql = queryBuilder.GetTableQueryStatement(ctx, query)
+	sql = queryBuilder.GetTableQueryStatement(session, query)
 	fmt.Printf("Query: %s\n", sql)
 	if !strings.Contains(sql, "LIMIT") {
 		t.Errorf("Invalid query: %s", sql)
 	}
 
-	rows, err := go_db_entities.Query(ctx, query)
+	rows, err := go_db_entities.Query(session, query)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -133,15 +139,17 @@ func TestFilterWithOrderBy(t *testing.T) {
 
 func TestFilterWithInClause(t *testing.T) {
 
-	ctx := OpenTestDB()
-	defer go_db_entities.CloseOrLog(ctx.DB)
+	storage := OpenTestDB()
+	defer go_db_entities.CloseOrLog(storage.DB)
 
-	err := go_db_entities.Create(ctx, &Person{})
+	session := go_db_entities.NewSession(storage)
+
+	err := go_db_entities.Create(session, &Person{})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = CreateTestPersons(ctx, 100)
+	err = CreateTestPersons(session, 100)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -158,13 +166,13 @@ func TestFilterWithInClause(t *testing.T) {
 		},
 	}
 
-	sql := queryBuilder.GetTableQueryStatement(ctx, query)
+	sql := queryBuilder.GetTableQueryStatement(session, query)
 	fmt.Printf("Query: %s\n", sql)
 	if !strings.Contains(sql, "ORDER BY") || !strings.Contains(sql, "WHERE") {
 		t.Errorf("Invalid query: %s", sql)
 	}
 
-	rows, err := go_db_entities.Query(ctx, query)
+	rows, err := go_db_entities.Query(session, query)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -176,15 +184,17 @@ func TestFilterWithInClause(t *testing.T) {
 
 func TestFilterWithDistinctClause(t *testing.T) {
 
-	ctx := OpenTestDB()
-	defer go_db_entities.CloseOrLog(ctx.DB)
+	storage := OpenTestDB()
+	defer go_db_entities.CloseOrLog(storage.DB)
 
-	err := go_db_entities.Create(ctx, &Person{})
+	session := go_db_entities.NewSession(storage)
+
+	err := go_db_entities.Create(session, &Person{})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = CreateTestPersons(ctx, 100)
+	err = CreateTestPersons(session, 100)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -196,13 +206,13 @@ func TestFilterWithDistinctClause(t *testing.T) {
 		Entity:     &Person{},
 	}
 
-	sql := queryBuilder.GetTableQueryStatement(ctx, query)
+	sql := queryBuilder.GetTableQueryStatement(session, query)
 	fmt.Printf("Query: %s\n", sql)
 	if strings.Contains(sql, "DISTINCT") {
 		t.Errorf("Invalid query: %s", sql)
 	}
 
-	rows, err := go_db_entities.Query(ctx, query)
+	rows, err := go_db_entities.Query(session, query)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -214,13 +224,13 @@ func TestFilterWithDistinctClause(t *testing.T) {
 		Distinct: true,
 	}
 
-	sql = queryBuilder.GetTableQueryStatement(ctx, query)
+	sql = queryBuilder.GetTableQueryStatement(session, query)
 	fmt.Printf("Query: %s\n", sql)
 	if !strings.Contains(sql, "DISTINCT") {
 		t.Errorf("Invalid query: %s", sql)
 	}
 
-	rows, err = go_db_entities.Query(ctx, query)
+	rows, err = go_db_entities.Query(session, query)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -231,13 +241,15 @@ func TestFilterWithDistinctClause(t *testing.T) {
 
 func TestEmptyFilterWithJoin(t *testing.T) {
 
-	ctx := OpenTestDB()
-	defer go_db_entities.CloseOrLog(ctx.DB)
+	storage := OpenTestDB()
+	defer go_db_entities.CloseOrLog(storage.DB)
+
+	session := go_db_entities.NewSession(storage)
 
 	filter := go_db_entities.NewFilter("", go_db_entities.CompareEqual, nil)
 	filter.Next = go_db_entities.NewFilter("FirstName", go_db_entities.CompareEqual, "Jon")
 
-	sql := ctx.QueryBuilder.FilterQueryBuilder.GetFilterStatement(ctx, *filter)
+	sql := session.Storage.QueryBuilder.FilterQueryBuilder.GetFilterStatement(session, *filter)
 	if !strings.HasPrefix(sql, "(FirstName") {
 		t.Errorf("Invalid filter: %s", sql)
 	}

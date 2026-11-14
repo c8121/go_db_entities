@@ -7,13 +7,13 @@ import (
 type InsertQueryBuilder struct {
 }
 
-func (b InsertQueryBuilder) GetInsertQuery(storage *go_db_entities.Storage, e go_db_entities.Entity) string {
+func (b InsertQueryBuilder) GetInsertQuery(session *go_db_entities.Session, e go_db_entities.Entity) string {
 
 	sql := "INSERT INTO " + e.GetEntityName()
 
 	fields := ""
 	params := ""
-	properties := go_db_entities.GetProperties(storage, e)
+	properties := go_db_entities.GetProperties(session, e)
 	entityFields := go_db_entities.GetVisibleFields(e)
 	for _, field := range entityFields {
 		if field.Name != "Id" {
@@ -25,7 +25,7 @@ func (b InsertQueryBuilder) GetInsertQuery(storage *go_db_entities.Storage, e go
 
 			typeName := properties.GetFieldType(field.Name, field.Type.Name())
 
-			typeMapping := storage.GetTypeMapping(typeName)
+			typeMapping := session.Storage.GetTypeMapping(typeName)
 			params += typeMapping.GetFieldParameter()
 		}
 	}

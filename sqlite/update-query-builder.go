@@ -7,12 +7,12 @@ import (
 type UpdateQueryBuilder struct {
 }
 
-func (b UpdateQueryBuilder) GetUpdateQuery(storage *go_db_entities.Storage, e go_db_entities.Entity) string {
+func (b UpdateQueryBuilder) GetUpdateQuery(session *go_db_entities.Session, e go_db_entities.Entity) string {
 
 	sql := "UPDATE " + e.GetEntityName()
 
 	fields := ""
-	properties := go_db_entities.GetProperties(storage, e)
+	properties := go_db_entities.GetProperties(session, e)
 	entityFields := go_db_entities.GetVisibleFields(e)
 	for _, field := range entityFields {
 		if field.Name != "Id" {
@@ -24,7 +24,7 @@ func (b UpdateQueryBuilder) GetUpdateQuery(storage *go_db_entities.Storage, e go
 
 			typeName := properties.GetFieldType(field.Name, field.Type.Name())
 
-			typeMapping := storage.GetTypeMapping(typeName)
+			typeMapping := session.Storage.GetTypeMapping(typeName)
 			fields += typeMapping.GetFieldParameter()
 		}
 	}

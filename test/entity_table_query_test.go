@@ -9,25 +9,27 @@ import (
 
 func TestEntityTableQuery(t *testing.T) {
 
-	ctx := OpenTestDB()
-	defer go_db_entities.CloseOrLog(ctx.DB)
+	storage := OpenTestDB()
+	defer go_db_entities.CloseOrLog(storage.DB)
 
-	err := go_db_entities.Create(ctx, &Person{})
+	session := go_db_entities.NewSession(storage)
+
+	err := go_db_entities.Create(session, &Person{})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = go_db_entities.Create(ctx, &PersonContactChannel{})
+	err = go_db_entities.Create(session, &PersonContactChannel{})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = go_db_entities.Create(ctx, &PersonCategory{})
+	err = go_db_entities.Create(session, &PersonCategory{})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = CreateTestPersons(ctx, 100)
+	err = CreateTestPersons(session, 100)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -37,7 +39,7 @@ func TestEntityTableQuery(t *testing.T) {
 		Entity:     &Person{},
 		Filter:     go_db_entities.NewFilter("Person.Id", go_db_entities.CompareGreater, 90),
 	}
-	sql := ctx.QueryBuilder.TableQueryBuilder.GetTableQueryStatement(ctx, *personQuery)
+	sql := storage.QueryBuilder.TableQueryBuilder.GetTableQueryStatement(session, *personQuery)
 	fmt.Println(sql)
 
 	numberQuery := &go_db_entities.TableQuery{
@@ -50,7 +52,7 @@ func TestEntityTableQuery(t *testing.T) {
 		OnFrom:     "Id",
 		OnTo:       "PersonId",
 	})
-	sql = ctx.QueryBuilder.TableQueryBuilder.GetTableQueryStatement(ctx, *personQuery)
+	sql = storage.QueryBuilder.TableQueryBuilder.GetTableQueryStatement(session, *personQuery)
 	fmt.Println(sql)
 
 	categoryQuery := &go_db_entities.TableQuery{
@@ -63,15 +65,15 @@ func TestEntityTableQuery(t *testing.T) {
 		OnFrom:     "CategoryId",
 		OnTo:       "Id",
 	})
-	sql = ctx.QueryBuilder.TableQueryBuilder.GetTableQueryStatement(ctx, *personQuery)
+	sql = storage.QueryBuilder.TableQueryBuilder.GetTableQueryStatement(session, *personQuery)
 	fmt.Println(sql)
 
 	personQuery.Filter.Offset = 0
 	personQuery.Filter.Count = 3
-	sql = ctx.QueryBuilder.TableQueryBuilder.GetTableQueryStatement(ctx, *personQuery)
+	sql = storage.QueryBuilder.TableQueryBuilder.GetTableQueryStatement(session, *personQuery)
 	fmt.Println(sql)
 
-	rows, err := go_db_entities.Query(ctx, *personQuery)
+	rows, err := go_db_entities.Query(session, *personQuery)
 	if err != nil {
 		t.Fatal(err)
 	}

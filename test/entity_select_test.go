@@ -9,15 +9,17 @@ import (
 
 func TestEntitySelect(t *testing.T) {
 
-	ctx := OpenTestDB()
-	defer go_db_entities.CloseOrLog(ctx.DB)
+	storage := OpenTestDB()
+	defer go_db_entities.CloseOrLog(storage.DB)
 
-	err := go_db_entities.Create(ctx, &Person{})
+	session := go_db_entities.NewSession(storage)
+
+	err := go_db_entities.Create(session, &Person{})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = CreateTestPersons(ctx, 100)
+	err = CreateTestPersons(session, 100)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -30,7 +32,7 @@ func TestEntitySelect(t *testing.T) {
 	filter.Offset = 10
 	filter.Count = 10
 
-	list, err := go_db_entities.Select(ctx, itemSupplier, *filter)
+	list, err := go_db_entities.Select(session, itemSupplier, *filter)
 	if err != nil {
 		t.Fatal(err)
 	}

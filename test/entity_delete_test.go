@@ -9,31 +9,33 @@ import (
 
 func TestEntityDelete(t *testing.T) {
 
-	ctx := OpenTestDB()
-	defer go_db_entities.CloseOrLog(ctx.DB)
+	storage := OpenTestDB()
+	defer go_db_entities.CloseOrLog(storage.DB)
 
-	err := go_db_entities.Create(ctx, &Person{})
+	session := go_db_entities.NewSession(storage)
+
+	err := go_db_entities.Create(session, &Person{})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = CreateTestPersons(ctx, 3)
+	err = CreateTestPersons(session, 3)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	person := &Person{}
-	err = go_db_entities.Load(ctx, person, *go_db_entities.NewIdFilter(1))
+	err = go_db_entities.Load(session, person, *go_db_entities.NewIdFilter(1))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = go_db_entities.Delete(ctx, person)
+	err = go_db_entities.Delete(session, person)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	items, err := go_db_entities.Select(ctx, func() go_db_entities.Entity { return &Person{} }, go_db_entities.Filter{})
+	items, err := go_db_entities.Select(session, func() go_db_entities.Entity { return &Person{} }, go_db_entities.Filter{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -48,24 +50,26 @@ func TestEntityDeleteBatch(t *testing.T) {
 	ctx := OpenTestDB()
 	defer go_db_entities.CloseOrLog(ctx.DB)
 
-	err := go_db_entities.Create(ctx, &Person{})
+	session := go_db_entities.NewSession(ctx)
+
+	err := go_db_entities.Create(session, &Person{})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = CreateTestPersons(ctx, 3)
+	err = CreateTestPersons(session, 3)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// Delete one
 	person := &Person{}
-	err = go_db_entities.DeleteBatch(ctx, person, *go_db_entities.NewIdFilter(1))
+	err = go_db_entities.DeleteBatch(session, person, *go_db_entities.NewIdFilter(1))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	items, err := go_db_entities.Select(ctx, func() go_db_entities.Entity { return &Person{} }, go_db_entities.Filter{})
+	items, err := go_db_entities.Select(session, func() go_db_entities.Entity { return &Person{} }, go_db_entities.Filter{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -75,12 +79,12 @@ func TestEntityDeleteBatch(t *testing.T) {
 	}
 
 	// Delete all
-	err = go_db_entities.DeleteBatch(ctx, person, go_db_entities.Filter{FieldName: "Id", Comparison: go_db_entities.CompareNotEqual, Value: 1})
+	err = go_db_entities.DeleteBatch(session, person, go_db_entities.Filter{FieldName: "Id", Comparison: go_db_entities.CompareNotEqual, Value: 1})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	items, err = go_db_entities.Select(ctx, func() go_db_entities.Entity { return &Person{} }, go_db_entities.Filter{})
+	items, err = go_db_entities.Select(session, func() go_db_entities.Entity { return &Person{} }, go_db_entities.Filter{})
 	if err != nil && !errors.Is(go_db_entities.ErrNotFound, err) {
 		t.Fatal(err)
 	}

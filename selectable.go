@@ -7,19 +7,19 @@ import (
 
 // SelectQueryBuilder generates SQL-Statements.
 type SelectQueryBuilder interface {
-	GetSelectQuery(storage *Storage, e Entity, filter Filter) string
+	GetSelectQuery(session *Session, e Entity, filter Filter) string
 }
 
 // Select takes a filter, selects rows from the connected database
 // and calls entitySupplier for each row to apply values to Entity.
-func Select(storage *Storage, entitySupplier func() Entity, filter Filter) ([]Entity, error) {
+func Select(session *Session, entitySupplier func() Entity, filter Filter) ([]Entity, error) {
 
 	e := entitySupplier()
 
-	sql := storage.QueryBuilder.SelectQueryBuilder.GetSelectQuery(storage, e, filter)
+	sql := session.Storage.QueryBuilder.SelectQueryBuilder.GetSelectQuery(session, e, filter)
 	slog.Debug(sql)
 
-	stmt, err := storage.DB.Prepare(sql)
+	stmt, err := session.StatementProvider.Prepare(sql)
 	if err != nil {
 		slog.Error("Preparing statement failed", "error", err)
 		return nil, err
@@ -54,7 +54,7 @@ func Select(storage *Storage, entitySupplier func() Entity, filter Filter) ([]En
 
 		structValue := destValue.Elem()
 		if entityFields == nil {
-			properties = GetProperties(storage, e)
+			properties = GetProperties(session, e)
 			entityFields = GetVisibleFields(e)
 		}
 		scanArgs := make([]any, len(entityFields))
@@ -74,7 +74,7 @@ func Select(storage *Storage, entitySupplier func() Entity, filter Filter) ([]En
 
 			typeName := properties.GetFieldType(field.Name, field.Type.Name())
 
-			typeMapping := storage.GetTypeMapping(typeName)
+			typeMapping := session.Storage.GetTypeMapping(typeName)
 			value, err := typeMapping.ConvertDbValue(scanValues[i])
 			if err != nil {
 				return nil, err

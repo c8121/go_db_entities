@@ -9,27 +9,27 @@ import (
 type TableQueryBuilder struct {
 }
 
-func (b TableQueryBuilder) GetTableQueryStatement(c *go_db_entities.Storage, q go_db_entities.TableQuery) string {
+func (b TableQueryBuilder) GetTableQueryStatement(session *go_db_entities.Session, q go_db_entities.TableQuery) string {
 
 	sql := "SELECT "
 	if q.Filter != nil && q.Filter.Distinct {
 		sql += "DISTINCT "
 	}
 
-	sql += b.GetFields(c, q) + " " +
-		"FROM " + b.GetFrom(c, q)
+	sql += b.GetFields(session, q) + " " +
+		"FROM " + b.GetFrom(session, q)
 
-	where := b.GetWhere(c, q)
+	where := b.GetWhere(session, q)
 	if len(where) > 0 {
 		sql += " WHERE " + where
 	}
 
-	order := b.GetOrderBy(c, q)
+	order := b.GetOrderBy(session, q)
 	if len(order) > 0 {
 		sql += " ORDER BY " + order
 	}
 
-	limit := b.GetLimit(c, q)
+	limit := b.GetLimit(session, q)
 	if len(limit) > 0 {
 		sql += " LIMIT " + limit
 	}
@@ -39,7 +39,7 @@ func (b TableQueryBuilder) GetTableQueryStatement(c *go_db_entities.Storage, q g
 	return sql
 }
 
-func (b TableQueryBuilder) GetOrderBy(storage *go_db_entities.Storage, q go_db_entities.TableQuery) string {
+func (b TableQueryBuilder) GetOrderBy(session *go_db_entities.Session, q go_db_entities.TableQuery) string {
 
 	sql := ""
 
@@ -55,7 +55,7 @@ func (b TableQueryBuilder) GetOrderBy(storage *go_db_entities.Storage, q go_db_e
 	return sql
 }
 
-func (b TableQueryBuilder) GetLimit(storage *go_db_entities.Storage, q go_db_entities.TableQuery) string {
+func (b TableQueryBuilder) GetLimit(session *go_db_entities.Session, q go_db_entities.TableQuery) string {
 
 	sql := ""
 
@@ -66,12 +66,12 @@ func (b TableQueryBuilder) GetLimit(storage *go_db_entities.Storage, q go_db_ent
 	return sql
 }
 
-func (b TableQueryBuilder) GetWhere(storage *go_db_entities.Storage, q go_db_entities.TableQuery) string {
+func (b TableQueryBuilder) GetWhere(session *go_db_entities.Session, q go_db_entities.TableQuery) string {
 
 	sql := ""
 
 	if q.Filter != nil {
-		sql = storage.QueryBuilder.FilterQueryBuilder.GetFilterStatement(storage, *q.Filter)
+		sql = session.Storage.QueryBuilder.FilterQueryBuilder.GetFilterStatement(session, *q.Filter)
 	}
 
 	if q.Join != nil {
@@ -80,7 +80,7 @@ func (b TableQueryBuilder) GetWhere(storage *go_db_entities.Storage, q go_db_ent
 				if len(sql) > 0 {
 					sql += " AND "
 				}
-				sql += storage.QueryBuilder.FilterQueryBuilder.GetFilterStatement(storage, *join.TableQuery.Filter)
+				sql += session.Storage.QueryBuilder.FilterQueryBuilder.GetFilterStatement(session, *join.TableQuery.Filter)
 			}
 		}
 	}
@@ -88,7 +88,7 @@ func (b TableQueryBuilder) GetWhere(storage *go_db_entities.Storage, q go_db_ent
 	return sql
 }
 
-func (b TableQueryBuilder) GetFrom(storage *go_db_entities.Storage, q go_db_entities.TableQuery) string {
+func (b TableQueryBuilder) GetFrom(session *go_db_entities.Session, q go_db_entities.TableQuery) string {
 
 	sql := q.Entity.GetEntityName()
 
@@ -102,7 +102,7 @@ func (b TableQueryBuilder) GetFrom(storage *go_db_entities.Storage, q go_db_enti
 			default:
 				sql += " INNER JOIN "
 			}
-			sql += b.GetFrom(storage, *join.TableQuery)
+			sql += b.GetFrom(session, *join.TableQuery)
 			sql += " ON " + q.Entity.GetEntityName() + "." + join.OnFrom + "=" + join.TableQuery.Entity.GetEntityName() + "." + join.OnTo
 			sql = "(" + sql + ")"
 		}
@@ -111,7 +111,7 @@ func (b TableQueryBuilder) GetFrom(storage *go_db_entities.Storage, q go_db_enti
 	return sql
 }
 
-func (b TableQueryBuilder) GetFields(storage *go_db_entities.Storage, q go_db_entities.TableQuery) string {
+func (b TableQueryBuilder) GetFields(session *go_db_entities.Session, q go_db_entities.TableQuery) string {
 
 	sql := ""
 	for _, field := range q.FieldNames {
@@ -123,7 +123,7 @@ func (b TableQueryBuilder) GetFields(storage *go_db_entities.Storage, q go_db_en
 
 	if q.Join != nil {
 		for _, join := range q.Join {
-			nextFields := b.GetFields(storage, *join.TableQuery)
+			nextFields := b.GetFields(session, *join.TableQuery)
 			if len(nextFields) > 0 {
 				if len(sql) > 0 {
 					sql += ","

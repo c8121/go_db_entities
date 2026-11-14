@@ -8,15 +8,23 @@ import (
 
 func TestEntityWithNullValues(t *testing.T) {
 
-	ctx := OpenTestDB()
-	defer go_db_entities.CloseOrLog(ctx.DB)
+	storage := OpenTestDB()
+	defer go_db_entities.CloseOrLog(storage.DB)
 
-	err := go_db_entities.Create(ctx, &Person{})
+	session := go_db_entities.NewSession(storage)
+
+	err := go_db_entities.Create(session, &Person{})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	_, err = ctx.DB.Exec("INSERT INTO PERSON (FirstName, LastName, CreatedAt, UpdatedAt) VALUES (NULL, NULL, NULL, NULL);")
+	stmt, err := storage.DB.Prepare("INSERT INTO PERSON (FirstName, LastName, CreatedAt, UpdatedAt) VALUES (NULL, NULL, NULL, NULL);")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer go_db_entities.CloseOrLog(stmt)
+
+	_, err = stmt.Exec()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -26,7 +34,7 @@ func TestEntityWithNullValues(t *testing.T) {
 	}
 
 	filter := go_db_entities.NewFilter("Id", go_db_entities.CompareGreaterEqual, 0)
-	_, err = go_db_entities.Select(ctx, itemSupplier, *filter)
+	_, err = go_db_entities.Select(session, itemSupplier, *filter)
 	if err != nil {
 		t.Fatal(err)
 	}

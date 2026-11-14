@@ -11,7 +11,7 @@ const (
 
 // TableQueryBuilder generates SQL-Select-Statements.
 type TableQueryBuilder interface {
-	GetTableQueryStatement(storage *Storage, q TableQuery) string
+	GetTableQueryStatement(session *Session, q TableQuery) string
 }
 
 type TableQuery struct {
@@ -37,12 +37,12 @@ func (q *TableQuery) AddJoin(join TableQueryJoin) {
 	q.Join = append(q.Join, join)
 }
 
-func Query(storage *Storage, q TableQuery) ([][]any, error) {
+func Query(session *Session, q TableQuery) ([][]any, error) {
 
-	sql := storage.QueryBuilder.TableQueryBuilder.GetTableQueryStatement(storage, q)
+	sql := session.Storage.QueryBuilder.TableQueryBuilder.GetTableQueryStatement(session, q)
 	slog.Debug(sql)
 
-	stmt, err := storage.DB.Prepare(sql)
+	stmt, err := session.StatementProvider.Prepare(sql)
 	if err != nil {
 		slog.Error("Preparing statement failed", "error", err)
 		return nil, err

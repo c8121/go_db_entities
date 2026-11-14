@@ -70,7 +70,7 @@ func (p *PersonCategory) SetId(id int64) {
 	p.Id = id
 }
 
-func CreateTestPersons(ctx *go_db_entities.Storage, num int) error {
+func CreateTestPersons(session *go_db_entities.Session, num int) error {
 
 	for i := 0; i < num; i++ {
 		person := &Person{
@@ -81,7 +81,7 @@ func CreateTestPersons(ctx *go_db_entities.Storage, num int) error {
 			UpdatedAt:    time.Time{},
 		}
 
-		err := go_db_entities.Save(ctx, person)
+		err := go_db_entities.Save(session, person)
 		if err != nil {
 			return err
 		}

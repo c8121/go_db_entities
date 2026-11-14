@@ -28,34 +28,36 @@ func (p *ErrorPerson) SetId(id int64) {
 
 func TestEntityValidation(t *testing.T) {
 
-	ctx := OpenTestDB()
-	defer go_db_entities.CloseOrLog(ctx.DB)
+	storage := OpenTestDB()
+	defer go_db_entities.CloseOrLog(storage.DB)
+
+	session := go_db_entities.NewSession(storage)
 
 	person := &Person{}
-	err := go_db_entities.Create(ctx, person)
+	err := go_db_entities.Create(session, person)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	CheckFieldsExistTest(t, ctx, person, false)
+	CheckFieldsExistTest(t, session, person, false)
 
-	err = go_db_entities.Validate(ctx, person)
+	err = go_db_entities.Validate(session, person)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	errPerson := &ErrorPerson{}
-	CheckFieldsExistTest(t, ctx, errPerson, true)
+	CheckFieldsExistTest(t, session, errPerson, true)
 
-	err = go_db_entities.Validate(ctx, errPerson)
+	err = go_db_entities.Validate(session, errPerson)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
-func CheckFieldsExistTest(t *testing.T, c *go_db_entities.Storage, e go_db_entities.Entity, expectError bool) {
+func CheckFieldsExistTest(t *testing.T, session *go_db_entities.Session, e go_db_entities.Entity, expectError bool) {
 	hadError := false
-	fields := go_db_entities.CheckFieldsExist(c, e)
+	fields := go_db_entities.CheckFieldsExist(session, e)
 	for _, field := range fields {
 		t.Log(field)
 		if field.Error != nil {

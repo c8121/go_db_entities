@@ -10,18 +10,18 @@ import (
 type SelectQueryBuilder struct {
 }
 
-func (b SelectQueryBuilder) GetSelectQuery(c *go_db_entities.Storage, e go_db_entities.Entity, filter go_db_entities.Filter) string {
+func (b SelectQueryBuilder) GetSelectQuery(session *go_db_entities.Session, e go_db_entities.Entity, filter go_db_entities.Filter) string {
 
 	sql := "SELECT "
 	if filter.Distinct {
 		sql += "DISTINCT "
 	}
 
-	sql += b.GetFields(c, e)
+	sql += b.GetFields(session, e)
 
 	sql += " FROM " + e.GetEntityName()
 
-	where := c.QueryBuilder.FilterQueryBuilder.GetFilterStatement(c, filter)
+	where := session.Storage.QueryBuilder.FilterQueryBuilder.GetFilterStatement(session, filter)
 	if len(where) > 0 {
 		sql += " WHERE " + where
 	}
@@ -51,10 +51,10 @@ func (b SelectQueryBuilder) GetSelectQuery(c *go_db_entities.Storage, e go_db_en
 	return sql
 }
 
-func (b SelectQueryBuilder) GetFields(storage *go_db_entities.Storage, e go_db_entities.Entity) string {
+func (b SelectQueryBuilder) GetFields(session *go_db_entities.Session, e go_db_entities.Entity) string {
 
 	fields := ""
-	properties := go_db_entities.GetProperties(storage, e)
+	properties := go_db_entities.GetProperties(session, e)
 	entityFields := go_db_entities.GetVisibleFields(e)
 	for _, field := range entityFields {
 		if len(fields) > 0 {
@@ -64,7 +64,7 @@ func (b SelectQueryBuilder) GetFields(storage *go_db_entities.Storage, e go_db_e
 		fieldName := properties.GetFieldName(field.Name)
 		typeName := properties.GetFieldType(field.Name, field.Type.Name())
 
-		typeMapping := storage.GetTypeMapping(typeName)
+		typeMapping := session.Storage.GetTypeMapping(typeName)
 		fields += typeMapping.GetFieldName(fieldName)
 	}
 

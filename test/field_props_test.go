@@ -28,10 +28,12 @@ func (t *TestEntity) SetId(id int64) {
 
 func TestFieldProps(t *testing.T) {
 
-	ctx := OpenTestDB()
-	defer go_db_entities.CloseOrLog(ctx.DB)
+	storage := OpenTestDB()
+	defer go_db_entities.CloseOrLog(storage.DB)
 
-	sql := ctx.QueryBuilder.CreateQueryBuilder.GetCreateQueries(ctx, &TestEntity{})[0]
+	session := go_db_entities.NewSession(storage)
+
+	sql := storage.QueryBuilder.CreateQueryBuilder.GetCreateQueries(session, &TestEntity{})[0]
 	if !strings.Contains(sql, " Name ") {
 		t.Errorf("TestFieldProps failed: 'Renamed' not changed to 'Name'")
 	}
@@ -39,22 +41,22 @@ func TestFieldProps(t *testing.T) {
 		t.Errorf("TestFieldProps failed: 'Embedding' not changed to 'float[]'")
 	}
 
-	err := go_db_entities.Create(ctx, &TestEntity{})
+	err := go_db_entities.Create(session, &TestEntity{})
 	if err != nil {
 		t.Error(err)
 	}
 
-	sql = ctx.QueryBuilder.InsertQueryBuilder.GetInsertQuery(ctx, &TestEntity{})
+	sql = storage.QueryBuilder.InsertQueryBuilder.GetInsertQuery(session, &TestEntity{})
 	if !strings.Contains(sql, "(Name,") {
 		t.Errorf("TestFieldProps failed: 'Renamed' not changed to 'Name'")
 	}
 
-	sql = ctx.QueryBuilder.UpdateQueryBuilder.GetUpdateQuery(ctx, &TestEntity{})
+	sql = storage.QueryBuilder.UpdateQueryBuilder.GetUpdateQuery(session, &TestEntity{})
 	if !strings.Contains(sql, " Name=") {
 		t.Errorf("TestFieldProps failed: 'Renamed' not changed to 'Name'")
 	}
 
-	sql = ctx.QueryBuilder.SelectQueryBuilder.GetSelectQuery(ctx, &TestEntity{}, *go_db_entities.NewIdFilter(1))
+	sql = storage.QueryBuilder.SelectQueryBuilder.GetSelectQuery(session, &TestEntity{}, *go_db_entities.NewIdFilter(1))
 	if !strings.Contains(sql, " Name,") {
 		t.Errorf("TestFieldProps failed: 'Renamed' not changed to 'Name'")
 	}

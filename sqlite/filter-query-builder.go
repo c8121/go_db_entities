@@ -10,7 +10,7 @@ import (
 type FilterQueryBuilder struct {
 }
 
-func (b FilterQueryBuilder) GetFilterStatement(storage *go_db_entities.Storage, f go_db_entities.Filter) string {
+func (b FilterQueryBuilder) GetFilterStatement(session *go_db_entities.Session, f go_db_entities.Filter) string {
 
 	sql := ""
 
@@ -70,7 +70,7 @@ func (b FilterQueryBuilder) GetFilterStatement(storage *go_db_entities.Storage, 
 				sql += " AND "
 			}
 		}
-		sql += b.GetFilterStatement(storage, *f.Next)
+		sql += b.GetFilterStatement(session, *f.Next)
 		sql = "(" + sql + ")"
 	}
 

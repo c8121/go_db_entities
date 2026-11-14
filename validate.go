@@ -3,11 +3,11 @@ package go_db_entities
 import "errors"
 
 type CheckFieldResult struct {
-	FielName string
-	Error    error
+	FieldName string
+	Error     error
 }
 
-func CheckFieldsExist(storage *Storage, e Entity) []CheckFieldResult {
+func CheckFieldsExist(session *Session, e Entity) []CheckFieldResult {
 
 	var list []CheckFieldResult
 
@@ -20,13 +20,13 @@ func CheckFieldsExist(storage *Storage, e Entity) []CheckFieldResult {
 			Filter:     NewIdFilter(-1),
 		}
 
-		_, err := Query(storage, *query)
+		_, err := Query(session, *query)
 		if errors.Is(err, ErrNotFound) {
 			err = nil
 		}
 		list = append(list, CheckFieldResult{
-			FielName: field.Name,
-			Error:    err,
+			FieldName: field.Name,
+			Error:     err,
 		})
 	}
 

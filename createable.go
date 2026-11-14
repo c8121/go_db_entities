@@ -4,31 +4,32 @@ import (
 	"log/slog"
 )
 
-const (
-	StructTagName = "dbe"
-)
-
 // CreateQueryBuilder generates DDL-Statements to create or update tables.
 type CreateQueryBuilder interface {
 	// GetCreateQueries generates all statements to create a new table incl. indexes
-	GetCreateQueries(c *Storage, e Entity) []string
+	GetCreateQueries(session *Session, e Entity) []string
 	// GetAddFieldsQueries generated statements to create fields in an existing table.
-	GetAddFieldsQueries(c *Storage, e Entity, fieldNames []string) []string
+	GetAddFieldsQueries(session *Session, e Entity, fieldNames []string) []string
 }
 
 // Create takes an Entity and creates the table in the connected database.
 // Uses CreateQueryBuilder to generate the DDL-Statement.
-func Create(c *Storage, e Entity) error {
+func Create(session *Session, e Entity) error {
 
 	if e == nil {
 		return ErrNil
 	}
 
-	ddl := c.QueryBuilder.CreateQueryBuilder.GetCreateQueries(c, e)
+	ddl := session.Storage.QueryBuilder.CreateQueryBuilder.GetCreateQueries(session, e)
 	for _, query := range ddl {
 		slog.Debug(query)
 
-		_, err := c.DB.Exec(query)
+		stmt, err := session.StatementProvider.Prepare(query)
+		if err != nil {
+			return err
+		}
+
+		_, err = stmt.Exec()
 		if err != nil {
 			slog.Error("DB.Exec failed", "error", err)
 			return err
@@ -40,25 +41,30 @@ func Create(c *Storage, e Entity) error {
 
 // Validate takes an Entity and checks if all fields exist in the table of the connected database.
 // Creates missing fields.
-func Validate(storage *Storage, e Entity) error {
+func Validate(session *Session, e Entity) error {
 
 	if e == nil {
 		return ErrNil
 	}
 
 	var missingFields []string
-	checkedFields := CheckFieldsExist(storage, e)
+	checkedFields := CheckFieldsExist(session, e)
 	for _, checkedField := range checkedFields {
 		if checkedField.Error != nil {
-			missingFields = append(missingFields, checkedField.FielName)
+			missingFields = append(missingFields, checkedField.FieldName)
 		}
 	}
 
-	ddl := storage.QueryBuilder.CreateQueryBuilder.GetAddFieldsQueries(storage, e, missingFields)
+	ddl := session.Storage.QueryBuilder.CreateQueryBuilder.GetAddFieldsQueries(session, e, missingFields)
 	for _, query := range ddl {
 		slog.Debug(query)
 
-		_, err := storage.DB.Exec(query)
+		stmt, err := session.StatementProvider.Prepare(query)
+		if err != nil {
+			return err
+		}
+
+		_, err = stmt.Exec()
 		if err != nil {
 			slog.Error("DB.Exec failed", "error", err)
 			return err
